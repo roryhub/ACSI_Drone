@@ -1,0 +1,8 @@
+prefix=/home/cerlabcontrol/Desktop/Drone Rewrite/install
+
+Name: usb_cam
+Description: Description of usb_cam
+Version: 0.3.6
+Cflags: -I/home/cerlabcontrol/Desktop/Drone Rewrite/install/include
+Libs: -L/home/cerlabcontrol/Desktop/Drone Rewrite/install/lib -lusb_cam
+Requires: 

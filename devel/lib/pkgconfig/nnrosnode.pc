@@ -1,0 +1,8 @@
+prefix=/home/cerlabcontrol/Desktop/Drone Rewrite/devel
+
+Name: nnrosnode
+Description: Description of nnrosnode
+Version: 1.0.0
+Cflags: 
+Libs: -L/home/cerlabcontrol/Desktop/Drone Rewrite/devel/lib 
+Requires: dronecomms roscpp std_msgs
