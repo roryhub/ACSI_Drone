@@ -5,6 +5,6 @@
 # This file includes the relevant testing commands required for 
 # testing this directory and lists subdirectories to be tested as well.
 subdirs(gtest)
-subdirs(acsi_drone)
+subdirs(ACSI_package/acsi)
 subdirs(nnrosnode)
 subdirs(usb_cam)

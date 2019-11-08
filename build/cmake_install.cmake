@@ -126,7 +126,7 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/cerlabcontrol/Desktop/Drone Rewrite/build/gtest/cmake_install.cmake")
-  include("/home/cerlabcontrol/Desktop/Drone Rewrite/build/acsi_drone/cmake_install.cmake")
+  include("/home/cerlabcontrol/Desktop/Drone Rewrite/build/ACSI_package/acsi/cmake_install.cmake")
   include("/home/cerlabcontrol/Desktop/Drone Rewrite/build/nnrosnode/cmake_install.cmake")
   include("/home/cerlabcontrol/Desktop/Drone Rewrite/build/usb_cam/cmake_install.cmake")
 

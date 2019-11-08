@@ -1,4 +1,0 @@
-geometry_msgs/PoseArray waypoints_in
-float32 step_size
----
-geometry_msgs/PoseArray waypoints_out

@@ -1,8 +1,0 @@
-prefix=/home/cerlabcontrol/Desktop/Drone Rewrite/devel
-
-Name: acsi_drone
-Description: Description of acsi_drone
-Version: 0.0.0
-Cflags: -I/home/cerlabcontrol/Desktop/Drone Rewrite/devel/include
-Libs: -L/home/cerlabcontrol/Desktop/Drone Rewrite/devel/lib 
-Requires: rospy geometry_msgs rospy message_runtime

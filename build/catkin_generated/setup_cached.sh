@@ -8,6 +8,7 @@
 
 # modified environment variables
 export CMAKE_PREFIX_PATH="/home/cerlabcontrol/Desktop/Drone Rewrite/devel:$CMAKE_PREFIX_PATH"
-export PWD="/home/cerlabcontrol/Desktop/Drone Rewrite/build"
+export LD_LIBRARY_PATH="/home/cerlabcontrol/Desktop/Drone Rewrite/devel/lib:$LD_LIBRARY_PATH"
+export PKG_CONFIG_PATH="/home/cerlabcontrol/Desktop/Drone Rewrite/devel/lib/pkgconfig:$PKG_CONFIG_PATH"
 export ROSLISP_PACKAGE_DIRECTORIES="/home/cerlabcontrol/Desktop/Drone Rewrite/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
 export ROS_PACKAGE_PATH="/home/cerlabcontrol/Desktop/Drone Rewrite/src:$ROS_PACKAGE_PATH"
