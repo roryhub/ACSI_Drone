@@ -1,2 +1,0 @@
-ACSI_package/acsi:nnrosnode:usb_cam
--DCATKIN_DEVEL_PREFIX=/home/cerlabcontrol/Desktop/Drone Rewrite/devel -DCMAKE_INSTALL_PREFIX=/home/cerlabcontrol/Desktop/Drone Rewrite/install -G Unix Makefiles
