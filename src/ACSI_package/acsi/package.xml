@@ -14,6 +14,8 @@
 
   <!-- Dependencies needed after this package is compiled. -->
   <run_depend>acsi_trajectory</run_depend>
+  <run_depend>acsi_controller</run_depend>
+
 
   <export>
     <metapackage/>
