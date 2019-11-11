@@ -15,6 +15,9 @@
   <!-- Dependencies needed after this package is compiled. -->
   <run_depend>acsi_trajectory</run_depend>
   <run_depend>acsi_controller</run_depend>
+  <run_depend>acsi_optitrak</run_depend>
+  <run_depend>acsi_crazyflie</run_depend>
+
 
 
   <export>
