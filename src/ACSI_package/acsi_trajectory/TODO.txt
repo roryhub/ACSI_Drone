@@ -1,0 +1,5 @@
+Need to:
+
+Update dependencies in package.xml and catkin_make
+Finish writing the node into ROS
+Write Rory's library to handle the Pose and PoseArray data type
