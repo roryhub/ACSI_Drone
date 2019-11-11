@@ -17,6 +17,7 @@
   <run_depend>acsi_controller</run_depend>
   <run_depend>acsi_optitrak</run_depend>
   <run_depend>acsi_crazyflie</run_depend>
+  <run_depend>acsi_mambo</run_depend>
 
 
 
