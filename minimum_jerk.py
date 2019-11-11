@@ -3,8 +3,11 @@ import numpy as np
 
 
 def get_waypoint(current, setpoint, time, time_freq):
+    '''
+    calculates a single waypoint for a minimum jerk trajectory
+    '''
     delta = setpoint - current
-    r = time / time_freq
+    r = time / time_freq # this variable starts close to 0 and goes to 1 over the course of the trajectory
     equation = 10 * r**3 - 15 * r**4 + 6 * r**5
     waypoint = current + delta * equation
     return waypoint
@@ -34,7 +37,7 @@ def get_jerk(current, setpoint, time, time_freq, move_time):
     return jerk
 
 
-def minimum_jerk(coord_start, coord_end, frequency, move_time, plotting=False):
+def minimum_jerk_extra(coord_start, coord_end, frequency, move_time, plotting=False):
     trajectory = np.array([])
     time_freq = int(move_time * frequency)
 
@@ -132,13 +135,67 @@ def plot_all(trajectory, velocity, acceleration, jerk, time):
     plt.show()
 
 
+def minimum_jerk(coord_start, coord_end, frequency, move_time):
+    '''
+    Parameters:
+        coord_start: Starting coordinate of trajectory
+            - type: could be a float/int or a list/tuple of coordinates depending on dimension of desired trajectory
+            - examples: 1, 1.0, (1.0, 2.0), [1, 2.0, 3]
+
+        coord_end: Ending coordinate of trajectory
+            - same format as coord_start
+
+        frequency: Need to further investigate how to tune this parameter.
+            It basically decides how many waypoints are calculated to compose the trajectory.
+            Maybe its dependent on the loop time of your control system?
+
+        move_time: time you want to take to reach destination
+
+    Returns:
+        minimum jerk trajectory: numpy array of waypoints for each trajectory
+            - dimension depends on the input coordinates
+            - 1D trajectory -> (n,) array
+            - (x, y, z) trajectory -> (n X 3) array where each column is the trajectory for the corresponding axis
+    '''
+
+    trajectory = np.array([]) # will append waypoints in the loop
+    time_freq = int(move_time * frequency) # number of waypoints to compose the trajectory
+
+    try:
+        # check if the input coordinates are 1D or higher dimension
+        _ = iter(coord_start)
+    except TypeError:
+        # need to put 1D coordinate into a list to make looping easy
+        coord_start = [coord_start]
+        coord_end = [coord_end]
+
+    dimension = len(coord_start) # 1, 2, or 3
+    
+    for d in range(dimension): # loop through each dimension 
+
+        for t in range(1, time_freq): # inner loop creates a trajectory for a single dimension
+            waypoint = get_waypoint(coord_start[d], coord_end[d], t, time_freq)
+            trajectory = np.append(trajectory, waypoint)
+        
+        if d == 0:
+            # return variable equals the 1D trajectory after the first outer loop iteration
+            all_trajectories = trajectory
+        else:
+            # if we are calculating a multidimensional trajectory then stack the trajectories by column
+            all_trajectories = np.column_stack((all_trajectories, trajectory))
+        
+        trajectory = np.array([]) # reset variable for next dimension trajectory
+
+    return all_trajectories
+
+
 if __name__ == '__main__':
     start_coord = (0, 0, 0)
     end_coord = (5, 10, 15)
     frequency = 100
     total_time = 5
 
-    trajectory, velocity, acceleration, jerk = minimum_jerk(start_coord, end_coord, frequency, total_time, plotting=True)
+    trajectory, velocity, acceleration, jerk = minimum_jerk_extra(start_coord, end_coord, frequency, total_time, plotting=True)
 
     time_array = [
         i / frequency
@@ -152,3 +209,5 @@ if __name__ == '__main__':
         jerk = jerk[:, np.newaxis]
 
     plot_all(trajectory, velocity, acceleration, jerk, time_array)
+
+    trajectory = minimum_jerk(start_coord, end_coord, frequency, total_time)
