@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-ROS node for use with Rory Hubbards minimum jerk trajectory generator using optitrak inputs and minimum jerk theory to be expanded
+ROS node for use with Rory Hubbard's minimum jerk trajectory generator using optitrak inputs and minimum jerk theory to be expanded
 for potentially multiple trajectory generation styles
 '''
 from os import sys, path
