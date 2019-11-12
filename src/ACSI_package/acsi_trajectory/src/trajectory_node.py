@@ -12,28 +12,39 @@ import rospy
 import math
 from geometry_msgs.msg import Point, PoseStamped, PoseArray, Pose
 
-def optitrak_callback(optitrak_location, container): #TODO: Deal with callback (USE HOOP DEMO CODE)
+def optitrak_callback(optitrak_location, container):
 
-    #TODO: update container
+    '''
+    Assigns the PoseStamped data to whatever Pose variable you pass it, dropping the header
+    '''
+
+    container = optitrak_location.pose
 
     return
+
 
 if __name__ == '__main__':
 
     rospy.init_node('trajectory_generator')
 
-    r = rospy.Rate(1) #Amount of times per second new trajectory will be generated and rospy loop will run
+    r = rospy.Rate(1) #Amount of times per second new trajectory will be generated and rospy loop will run #TODO: Set on the rosparam server
+
     drone_location = Pose() 
     target_location = Pose()
 
     traj_pub = rospy.Publisher("trajectory_array",PoseArray,queue_size=10)
-    rospy.Subscriber("/vrpn_client_node/Drone/pose", PoseStamped, optitrak_callback,callback_args=drone_location) #TODO: Add callback fn and determine topic name
-    rospy.Subscriber("/vrpn_client_node/Target/pose", PoseStamped, optitrak_callback,callback_args=target_location) #TODO: Add callback fn and determine topic name
+
+    #These subscribers currently use the vrpn_client_node library and not Bedillian's I plan on writiing a handler that deals with them seperately and publishes them to identical topics so that this node is agnostic to the data source
+    rospy.Subscriber("/vrpn_client_node/Drone/pose", PoseStamped, optitrak_callback,callback_args=drone_location) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
+    rospy.Subscriber("/vrpn_client_node/Target/pose", PoseStamped, optitrak_callback,callback_args=target_location) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
+
+    target_z_offset = .5 #Amount of distance above target we need to be to capture it. #TODO: Set on the rosparam server
 
     while not rospy.is_shutdown():
 
-        #These subscribers currently use the vrpn_client_node library and not Bedillian's I plan on writiing a handler that deals with them seperately and publishes them to identical topics so that this node is agnostic to the data source
         
+
+        #TODO: Turn ROS types to 
         start_coord = (0, 0, 0) #TODO: need to add subscriber to optitrak coordinates for current drone location
         end_coord = (5, 10, 15) #TODO: need to add subscriber to optitrak coordiantes for target location + offset for pickup
 
