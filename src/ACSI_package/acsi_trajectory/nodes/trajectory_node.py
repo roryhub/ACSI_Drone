@@ -10,7 +10,6 @@ import rospy
 import math
 from acsi_trajectory import minimum_jerk as traj
 from geometry_msgs.msg import Point, PoseStamped, PoseArray, Pose
-print('hi')
 
 def optitrak_callback(optitrak_location, container):
 
@@ -28,6 +27,7 @@ if __name__ == '__main__':
     rospy.init_node('trajectory_generator')
 
     r = rospy.Rate(1) #Amount of times per second new trajectory will be generated and rospy loop will run #TODO: Set on the rosparam server
+
 
     drone_location = Pose() 
     target_location = Pose()
@@ -51,8 +51,6 @@ if __name__ == '__main__':
         frequency =  100 #TODO: need 
         total_time = 5 #TODO: needs to be updated to fit goal time to reasonable speed (maybe function based on euclidian distance and goal max speed?)
 
-        trajectory, velocity, acceleration, jerk = traj.minimum_jerk_extra(start_coord, end_coord, frequency, total_time, plotting=True)
-
         time_array = [
             i / frequency
             for i in range(1, int(total_time * frequency))
@@ -67,6 +65,7 @@ if __name__ == '__main__':
         #traj.plot_all(trajectory, velocity, acceleration, jerk, time_array)
         trajectory = traj.minimum_jerk(start_coord, end_coord, frequency, total_time) #TODO: need to convert this into pose array data type
         trajectory = PoseArray()
+
         traj_pub.publish(trajectory)
         r.sleep()
 
