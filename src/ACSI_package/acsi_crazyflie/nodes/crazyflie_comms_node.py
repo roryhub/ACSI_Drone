@@ -4,9 +4,11 @@
 Simple example that connects to the first Crazyflie found, ramps up/down
 the motors and disconnects.
 """
+
+import rospy
 import logging
 import time
-from threading import Thread
+import threading
 
 import cflib
 from cflib.crazyflie import Crazyflie
@@ -14,9 +16,10 @@ from cflib.crazyflie import Crazyflie
 logging.basicConfig(level=logging.ERROR)
 
 
-class MotorRampExample:
+class CrazyflieComm:
     """Example that connects to a Crazyflie and ramps the motors up/down and
     the disconnects"""
+    start_thread = False
 
     def __init__(self, link_uri):
         """ Initialize and run the example with the specified link_uri """
@@ -33,12 +36,12 @@ class MotorRampExample:
         print('Connecting to %s' % link_uri)
 
     def _connected(self, link_uri):
-        """ This callback is called form the Crazyflie API when a Crazyflie
+        """ This callback is called from the Crazyflie API when a Crazyflie
         has been connected and the TOCs have been downloaded."""
 
         # Start a separate thread to do the motor test.
         # Do not hijack the calling thread!
-        Thread(target=self._ramp_motors).start()
+        self.start_thread = True
 
     def _connection_failed(self, link_uri, msg):
         """Callback when connection initial connection fails (i.e no Crazyflie
@@ -53,6 +56,12 @@ class MotorRampExample:
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected (called in all cases)"""
         print('Disconnected from %s' % link_uri)
+
+    def _setpoint_manager(self):
+        r = rospy.Rate(.5)
+        while not rospy.is_shutdown():
+            print("I'm still here")
+            r.sleep()
 
     def _ramp_motors(self):
         thrust_mult = 1
@@ -79,16 +88,37 @@ class MotorRampExample:
 
 
 if __name__ == '__main__':
+    rospy.init_node('crazyflie_comms_node')
+
+    tries = 0
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
     # Scan for Crazyflies and use the first one found
-    print('Scanning interfaces for Crazyflies...')
-    available = cflib.crtp.scan_interfaces()
-    print('Crazyflies found:')
-    for i in available:
-        print(i[0])
+    print('Scanning interfaces for Crazyflies:\n')
+    r = rospy.Rate(.2)
+    while not rospy.is_shutdown():
+        tries = tries + 1
+        available = cflib.crtp.scan_interfaces()
+    
+        if len(available) > 0:
+            print('Crazyflies found:')
+            for i in available:
+                print(i[0])
+            le = CrazyflieComm(available[0][0])
 
-    if len(available) > 0:
-        le = MotorRampExample(available[0][0])
-    else:
-        print('No Crazyflies found, cannot run example')
+            break
+        else:
+            print('\rAttempt ' + str(tries) + ' failed, no Crazyflies found         ', end =" ")
+        r.sleep()
+
+    r = rospy.Rate(60)
+    crazy_thread = threading.Thread(target=le._setpoint_manager,daemon=True)
+
+    while not rospy.is_shutdown():
+
+        if le.start_thread:
+            crazy_thread.start()
+            le.start_thread = False
+
+        r.sleep()
+
