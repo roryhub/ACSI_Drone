@@ -56,12 +56,6 @@ if __name__ == '__main__':
             for i in range(1, int(total_time * frequency))
         ]
 
-        if len(trajectory.shape) == 1:
-            trajectory = trajectory[:, np.newaxis]
-            velocity = velocity[:, np.newaxis]
-            acceleration = acceleration[:, np.newaxis]
-            jerk = jerk[:, np.newaxis]
-
         #traj.plot_all(trajectory, velocity, acceleration, jerk, time_array)
         trajectory = traj.minimum_jerk(start_coord, end_coord, frequency, total_time) #TODO: need to convert this into pose array data type
         trajectory = PoseArray()

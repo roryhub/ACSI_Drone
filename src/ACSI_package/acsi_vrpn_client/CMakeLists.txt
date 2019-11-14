@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(vrpn_client_ros)
+project(acsi_vrpn_client)
 
 find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp tf2_ros)
 find_package(VRPN REQUIRED)

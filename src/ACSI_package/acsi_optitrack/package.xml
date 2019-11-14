@@ -13,7 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
-  <run_depend>vrpn_client_ros</run_depend>
+  <run_depend>acsi_vrpn_client</run_depend>
 
 
   <export>

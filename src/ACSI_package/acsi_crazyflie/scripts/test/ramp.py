@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+
 # -*- coding: utf-8 -*-
 #
 #     ||          ____  _ __
@@ -24,8 +27,8 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA  02110-1301, USA.
 """
-Simple example that connects 2 Crazyflies, ramp up-down the motors and
-disconnects.
+Simple example that connects to the first Crazyflie found, ramps up/down
+the motors and disconnects.
 """
 import logging
 import time
@@ -53,8 +56,6 @@ class MotorRampExample:
 
         self._cf.open_link(link_uri)
 
-        self.connected = True
-
         print('Connecting to %s' % link_uri)
 
     def _connected(self, link_uri):
@@ -69,18 +70,15 @@ class MotorRampExample:
         """Callback when connection initial connection fails (i.e no Crazyflie
         at the specified address)"""
         print('Connection to %s failed: %s' % (link_uri, msg))
-        self.connected = False
 
     def _connection_lost(self, link_uri, msg):
         """Callback when disconnected after a connection has been made (i.e
         Crazyflie moves out of range)"""
         print('Connection to %s lost: %s' % (link_uri, msg))
-        self.connected = False
 
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected (called in all cases)"""
         print('Disconnected from %s' % link_uri)
-        self.connected = False
 
     def _ramp_motors(self):
         thrust_mult = 1
@@ -109,8 +107,14 @@ class MotorRampExample:
 if __name__ == '__main__':
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
-    # Connect the two Crazyflies and ramps them up-down
-    le0 = MotorRampExample('radio://0/70/2M')
-    le1 = MotorRampExample('radio://1/80/250K')
-    while(le0.connected or le1.connected):
-        time.sleep(0.1)
+    # Scan for Crazyflies and use the first one found
+    print('Scanning interfaces for Crazyflies...')
+    available = cflib.crtp.scan_interfaces()
+    print('Crazyflies found:')
+    for i in available:
+        print(i[0])
+
+    if len(available) > 0:
+        le = MotorRampExample(available[0][0])
+    else:
+        print('No Crazyflies found, cannot run example')
