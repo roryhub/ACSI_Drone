@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!--CSV-->
+
+	<node pkg="acsi_trajectory" type="trajectory_node.py"  name ="trajectory_generator" output="screen"/>
+
+</launch>

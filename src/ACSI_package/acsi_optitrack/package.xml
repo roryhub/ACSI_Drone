@@ -1,7 +1,7 @@
 <package>
-  <name>acsi</name>
+  <name>acsi_optitrack</name>
   <version>0.0.1</version>
-  <description>ROS package for acsi project use</description>
+  <description>ROS meta-package for acsi_optitrack project use</description>
 
   <maintainer email="gmetts@andrew.cmu.edu">Grant Metts</maintainer>
 
@@ -13,11 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
-  <run_depend>acsi_trajectory</run_depend>
-  <run_depend>acsi_controller</run_depend>
-  <run_depend>acsi_optitrack</run_depend>
-  <run_depend>acsi_drone</run_depend>
-  <run_depend>acsi_client</run_depend>
+  <run_depend>acsi_vrpn_client</run_depend>
 
 
   <export>

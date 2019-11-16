@@ -1,5 +1,5 @@
 <package>
-  <name>acsi</name>
+  <name>acsi_drone</name>
   <version>0.0.1</version>
   <description>ROS package for acsi project use</description>
 
@@ -13,12 +13,8 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
-  <run_depend>acsi_trajectory</run_depend>
-  <run_depend>acsi_controller</run_depend>
-  <run_depend>acsi_optitrack</run_depend>
-  <run_depend>acsi_drone</run_depend>
-  <run_depend>acsi_client</run_depend>
-
+  <run_depend>acsi_crazyflie</run_depend>
+  <run_depend>acsi_mambo</run_depend>
 
   <export>
     <metapackage/>
