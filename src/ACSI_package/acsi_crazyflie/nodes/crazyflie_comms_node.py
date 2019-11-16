@@ -12,14 +12,23 @@ import threading
 
 import cflib
 from cflib.crazyflie import Crazyflie
+from std_msgs.msg import String, Float64MultiArray
+
 
 logging.basicConfig(level=logging.ERROR)
+
+
+
+def command_callback(command,command_goal):
+    command_goal = command
 
 
 class CrazyflieComm:
     """Example that connects to a Crazyflie and ramps the motors up/down and
     the disconnects"""
+    
     start_thread = False
+    command_goal = Float64MultiArray()
 
     def __init__(self, link_uri):
         """ Initialize and run the example with the specified link_uri """
@@ -39,8 +48,8 @@ class CrazyflieComm:
         """ This callback is called from the Crazyflie API when a Crazyflie
         has been connected and the TOCs have been downloaded."""
 
-        # Start a separate thread to do the motor test.
-        # Do not hijack the calling thread!
+        # Start a separate thread to do the motor control.
+        # Anything done in here will hijack the external thread 
         self.start_thread = True
 
     def _connection_failed(self, link_uri, msg):
@@ -58,9 +67,13 @@ class CrazyflieComm:
         print('Disconnected from %s' % link_uri)
 
     def _setpoint_manager(self):
-        r = rospy.Rate(.5)
+        r = rospy.Rate(100) #100 Hz is the recommended communication baudrate
+        self._cf.commander.send_setpoint(0, 0, 0, 0)
+
         while not rospy.is_shutdown():
-            print("I'm still here")
+            #self.command_goal
+            self._cf.commander.send_setpoint(0, 0, 0, 0)
+            print(self.command_goal)
             r.sleep()
 
     def _ramp_motors(self):
@@ -90,6 +103,8 @@ class CrazyflieComm:
 if __name__ == '__main__':
     rospy.init_node('crazyflie_comms_node')
 
+    status_pub = rospy.Publisher('crazyflie_comms/status',String,queue_size=10)
+
     tries = 0
     # Initialize the low-level drivers (don't list the debug drivers)
     cflib.crtp.init_drivers(enable_debug_driver=False)
@@ -110,6 +125,8 @@ if __name__ == '__main__':
         else:
             print('\rAttempt ' + str(tries) + ' failed, no Crazyflies found         ', end =" ")
         r.sleep()
+
+    rospy.Subscriber('controller/ypr',Float64MultiArray,command_callback,callback_args=le.command_goal) #TODO: Create custom message type for more intuitive ypr set point message
 
     r = rospy.Rate(60)
     crazy_thread = threading.Thread(target=le._setpoint_manager,daemon=True)
