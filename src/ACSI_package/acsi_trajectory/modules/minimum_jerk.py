@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt #Version 3.0.3
 import numpy as np #Version 1.17.4
+import rospy
+from geometry_msgs.msg import Pose, PoseArray
 
 
 def get_waypoint(current, setpoint, time, time_freq):
@@ -157,7 +159,6 @@ def minimum_jerk(coord_start, coord_end, frequency, move_time):
             - 1D trajectory -> (n,) array
             - (x, y, z) trajectory -> (n X 3) array where each column is the trajectory for the corresponding axis
     '''
-
     trajectory = np.array([]) # will append waypoints in the loop
     time_freq = int(move_time * frequency) # number of waypoints to compose the trajectory
 
@@ -188,3 +189,19 @@ def minimum_jerk(coord_start, coord_end, frequency, move_time):
 
     return all_trajectories
 
+
+def minimum_jerk_pose(start_pose, end_pose, frequency, move_time):
+    waypoint_pose = Pose()
+    trajectory = PoseArray() # will append pose waypoints in the loop
+    time_freq = int(move_time * frequency) # number of waypoints to compose the trajectory
+
+    for t in range(1, time_freq): # inner loop creates a trajectory for a single dimension
+        waypoint_x = get_waypoint(start_pose.position.x, end_pose.position.x, t, time_freq)
+        waypoint_y = get_waypoint(start_pose.position.y, end_pose.position.y, t, time_freq)
+        waypoint_z = get_waypoint(start_pose.position.z, end_pose.position.z, t, time_freq)
+        waypoint_pose.position.x = waypoint_x
+        waypoint_pose.position.y = waypoint_y
+        waypoint_pose.position.z = waypoint_z
+        trajectory.poses.append(waypoint_pose)
+
+    return trajectory
