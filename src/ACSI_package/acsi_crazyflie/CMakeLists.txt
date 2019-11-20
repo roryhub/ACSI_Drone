@@ -12,16 +12,16 @@ catkin_python_setup()
 
 generate_messages(
   DEPENDENCIES
+  acsi_controller
   geometry_msgs
   std_msgs
 )
 
 catkin_package(
-    CATKIN_DEPENDS rospy geometry_msgs rospy message_runtime
+    CATKIN_DEPENDS rospy geometry_msgs rospy message_runtime acsi_controller
 )
 
 install(PROGRAMS
   nodes/crazyflie_comms_node
-  scripts/test/ramp
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
