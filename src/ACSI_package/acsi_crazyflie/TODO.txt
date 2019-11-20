@@ -1,0 +1,4 @@
+Need to export the current extra code in node into src folder library
+Need to clean up and comment the code
+
+Possibly find healthier way to handle the sending thread besides global variables

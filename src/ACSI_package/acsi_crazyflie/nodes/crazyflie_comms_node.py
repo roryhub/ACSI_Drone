@@ -5,6 +5,8 @@ Simple example that connects to the first Crazyflie found, ramps up/down
 the motors and disconnects.
 """
 
+#TODO: Export the uneccessary stuff for the ros things into an src folder
+
 import rospy
 import logging
 import time
@@ -12,7 +14,7 @@ import threading
 
 import cflib
 from cflib.crazyflie import Crazyflie
-from std_msgs.msg import String, Float64MultiArray
+from std_msgs.msg import String
 from geometry_msgs.msg import Twist, Pose
 from acsi_controller.msg import Attitude_Setpoint
 
@@ -89,29 +91,6 @@ class CrazyflieComm:
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected (called in all cases)"""
         print('Disconnected from %s' % link_uri)
-
-    def _ramp_motors(self):
-        thrust_mult = 1
-        thrust_step = 500
-        thrust = 20000
-        pitch = 0
-        roll = 0
-        yawrate = 0
-
-        # Unlock startup thrust protection
-        self._cf.commander.send_setpoint(0, 0, 0, 0)
-
-        while thrust >= 20000:
-            self._cf.commander.send_setpoint(roll, pitch, yawrate, thrust)
-            time.sleep(0.1)
-            if thrust >= 25000:
-                thrust_mult = -1
-            thrust += thrust_step * thrust_mult
-        self._cf.commander.send_setpoint(0, 0, 0, 0)
-        # Make sure that the last packet leaves before the link is closed
-        # since the message queue is not flushed before closing
-        time.sleep(0.1)
-        self._cf.close_link()
 
 
 if __name__ == '__main__':
