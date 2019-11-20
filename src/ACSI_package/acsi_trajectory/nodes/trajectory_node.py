@@ -30,7 +30,7 @@ def drone_callback(optitrak_location):
 
 def target_callback(optitrak_location):
     global target_location, target_received
-]
+
     target_location = optitrak_location.pose
     target_received = True
 
