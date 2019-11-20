@@ -200,18 +200,26 @@ if __name__ == '__main__':
     desired_pose.orientation.z = 0
     desired_pose.orientation.w = 1
 
+    test_setpoint = Attitude_Setpoint()
+    test_setpoint.pitch = 0
+    test_setpoint.roll = 90
+    test_setpoint.yaw_rate = 0
+    test_setpoint.thrust = 33000
+
     r = rospy.Rate(100)
     sequence = 0
     while not rospy.is_shutdown():
-        euler = get_euler(current_pose.orientation)
-        print(str(euler[0]/pi*180) + ' ::: ' + str(euler[1]/pi*180) + ' ::: ' + str(euler[2]/pi*180))
+        current_euler = get_euler(current_pose.orientation)
         if(recieved_trajectory == True and recieved_optitrack == True and sequence < len(trajectory.poses)):
             #desired_pose = trajectory.poses[sequence]
             #spin_controller(current_pose,desired_pose,error,integral)
-            setpoint_pub.publish(spin_controller(current_pose,desired_pose,error,integral))
+            current_setpoint = spin_controller(current_pose,desired_pose,error,integral)
+            setpoint_pub.publish(test_setpoint)
             sequence = sequence + 1
         else:
-            setpoint_pub.publish(spin_controller(current_pose,desired_pose,error,integral))
+            current_setpoint = spin_controller(current_pose,desired_pose,error,integral)
+
+            setpoint_pub.publish(test_setpoint)
             #spin_controller(current_pose,desired_pose,error,integral)
 
 

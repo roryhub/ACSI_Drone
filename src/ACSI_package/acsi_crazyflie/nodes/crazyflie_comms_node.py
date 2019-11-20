@@ -43,9 +43,9 @@ def setpoint_manager(drone):
     drone._cf.commander.send_setpoint(0, 0, 0, 0)
     while not rospy.is_shutdown():
         command_lock.acquire()
-        drone._cf.commander.send_setpoint(command_goal.pitch, command_goal.roll, command_goal.yaw_rate, int(command_goal.thrust))
+        drone._cf.commander.send_setpoint(command_goal.roll, command_goal.pitch, command_goal.yaw_rate, int(command_goal.thrust))
         command_lock.release()
-        #print(command_goal)
+        print(command_goal)
         r.sleep()
 
 
