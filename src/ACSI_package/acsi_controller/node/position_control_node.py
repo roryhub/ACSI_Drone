@@ -4,6 +4,7 @@
 #TODO: Update dependency on numpy and tf 
 
 '''
+Euler angle order needs to be ZXY for consistent stability 
 Follows Right hand convention. X is forward Z is right Y is up in drone frame
 TODO: Possible issues with Optitrack environment alignment on initialization. May need a calibration protocol
 '''
@@ -14,7 +15,7 @@ from geometry_msgs.msg import Pose, PoseArray, PoseStamped, PoseStamped, Quatern
 from std_msgs.msg import String
 import numpy as np
 import tf
-from math import sin, cos
+from math import sin, cos, pi
 
 recieved_trajectory = False
 recieved_optitrack = False
@@ -77,7 +78,7 @@ def spin_controller(current_pose,desired_pose,error_hist,integral): #
     calculated_setpoint.yaw_rate, integral =  yaw_controller(error_hist,integral)
 
     calculated_setpoint.pitch, calculated_setpoint.roll, integral = position_controller(error_hist,integral)
-    print(calculated_setpoint)
+    #print(calculated_setpoint)
     return calculated_setpoint
 
 def altitude_controller(error, integral):#
@@ -122,8 +123,13 @@ def yaw_transform(global_position,yaw):
 
 def get_yaw(orientation):
     explicit_quat = [orientation.x, orientation.y, orientation.z, orientation.w]
-    current_euler = tf.transformations.euler_from_quaternion(explicit_quat)
+    current_euler = tf.transformations.euler_from_quaternion(explicit_quat,'szxy')
     return current_euler[2]
+
+def get_euler(orientation):
+    explicit_quat = [orientation.x, orientation.y, orientation.z, orientation.w]
+    current_euler = tf.transformations.euler_from_quaternion(explicit_quat, "szxy")
+    return current_euler
 
 def position_controller(error,integral):#
 
@@ -197,6 +203,8 @@ if __name__ == '__main__':
     r = rospy.Rate(100)
     sequence = 0
     while not rospy.is_shutdown():
+        euler = get_euler(current_pose.orientation)
+        print(str(euler[0]/pi*180) + ' ::: ' + str(euler[1]/pi*180) + ' ::: ' + str(euler[2]/pi*180))
         if(recieved_trajectory == True and recieved_optitrack == True and sequence < len(trajectory.poses)):
             #desired_pose = trajectory.poses[sequence]
             #spin_controller(current_pose,desired_pose,error,integral)
