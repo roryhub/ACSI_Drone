@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     rospy.init_node('trajectory_generator')
 
-    r = rospy.Rate(1) #Amount of times per second new trajectory will be generated and rospy loop will run #TODO: Set on the rosparam server
+    r = rospy.Rate(.2) #Amount of times per second new trajectory will be generated and rospy loop will run #TODO: Set on the rosparam server
 
 
     drone_location = Pose() 
