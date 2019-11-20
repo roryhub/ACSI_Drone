@@ -22,6 +22,7 @@ def optitrak_callback(optitrak_location, callback_args):
     container = optitrak_location.pose
 
     received_bool = callback_args[1]
+    received_bool = True
 
 
 
