@@ -42,23 +42,20 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
 
-        
-
         #TODO: Turn ROS types to 
-        start_coord = (0, 0, 0) #TODO: need to add subscriber to optitrak coordinates for current drone location
-        end_coord = (5, 10, 15) #TODO: need to add subscriber to optitrak coordiantes for target location + offset for pickup
+        # start_coord = (0, 0, 0) #TODO: need to add subscriber to optitrak coordinates for current drone location
+        # end_coord = (5, 10, 15) #TODO: need to add subscriber to optitrak coordiantes for target location + offset for pickup
 
         frequency =  100 #TODO: need 
         total_time = 5 #TODO: needs to be updated to fit goal time to reasonable speed (maybe function based on euclidian distance and goal max speed?)
 
-        time_array = [
-            i / frequency
-            for i in range(1, int(total_time * frequency))
-        ]
+        # time_array = [
+        #     i / frequency
+        #     for i in range(1, int(total_time * frequency))
+        # ]
 
         #traj.plot_all(trajectory, velocity, acceleration, jerk, time_array)
-        trajectory = traj.minimum_jerk(start_coord, end_coord, frequency, total_time) #TODO: need to convert this into pose array data type
-        trajectory = PoseArray()
+        trajectory = traj.minimum_jerk_pose(drone_location, target_location, frequency, total_time) #TODO: need to convert this into pose array data type
 
         traj_pub.publish(trajectory)
         r.sleep()
