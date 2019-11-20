@@ -10,7 +10,8 @@ def terminal_thread():
     os.system('gnome-terminal -- bash -c "killall -9 roscore; killall -9 rosmaster;roslaunch acsi_trajectory Rory.launch; exec bash"')
 
 def terminal_thread2():
-    os.system('gnome-terminal -- bash -c "rostopic echo /trajectory_array; exec bash"')
+    #os.system('gnome-terminal -- bash -c "rostopic echo /trajectory_array; exec bash"')
+    pass
 
 
 class LaunchSelector(Widget):

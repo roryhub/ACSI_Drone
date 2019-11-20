@@ -2,7 +2,7 @@
 
   <arg name="server" default="localhost"/>
 
-  <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen">
+  <node pkg="vrpn_client_ros" type="vrpn_client_node" name="vrpn_client_node" output="screen" launch-prefix="gnome-terminal --geometry 73x31+0+750 -e">
     <rosparam subst_value="true">
       server: 10.0.0.2
       port: 3883

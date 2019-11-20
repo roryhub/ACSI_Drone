@@ -35,7 +35,7 @@ def keyboard_callback(command):
     command_goal.yaw_rate = command.angular.z
     command_goal.thrust = int(33000 + command.linear.z * 20000)
     command_lock.release()
-    print(command_goal)
+    #print(command_goal)
 
 def setpoint_manager(drone):
     global command_goal
@@ -43,9 +43,9 @@ def setpoint_manager(drone):
     drone._cf.commander.send_setpoint(0, 0, 0, 0)
     while not rospy.is_shutdown():
         command_lock.acquire()
-        drone._cf.commander.send_setpoint(command_goal.pitch, command_goal.roll, command_goal.yaw_rate, command_goal.thrust)
+        drone._cf.commander.send_setpoint(command_goal.pitch, command_goal.roll, command_goal.yaw_rate, int(command_goal.thrust))
         command_lock.release()
-        print(command_goal)
+        #print(command_goal)
         r.sleep()
 
 
@@ -129,6 +129,7 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
 
         if le.start_thread:
+            print("Successfully connected to Crazyflie")
             crazy_thread.start()
             le.start_thread = False
 

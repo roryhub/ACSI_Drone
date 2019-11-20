@@ -20,9 +20,16 @@ tf.transformations.quaternion_slerp
 #TODO: Possibly make error msg type to handle the data in a better struct as well as the integral data
 #TODO: May need to check axis convention to align with optitrack
 
-def yaw_difference(current_quaternion,desired_quaternion):
+recieved_trajectory = False
+recieved_optitrack = False
+current_pose = Pose()
+trajectory = PoseArray()
 
-    quat_diff =tf.transformations.quaternion_multiply(desired_quaternion,tf.transformations.quaternion_conjugate(current_quaternion))
+def yaw_difference(current_quaternion,desired_quaternion):
+    current_explicit_quat = [current_quaternion.x, current_quaternion.y, current_quaternion.z, current_quaternion.w]
+    desired_explicit_quat = [desired_quaternion.x, desired_quaternion.y, desired_quaternion.z, desired_quaternion.w]
+
+    quat_diff =tf.transformations.quaternion_multiply(desired_explicit_quat,tf.transformations.quaternion_conjugate(current_explicit_quat))
     euler_diff = tf.transformations.euler_from_quaternion(quat_diff)
 
     return euler_diff[2]
@@ -69,11 +76,11 @@ def spin_controller(current_pose,desired_pose,error_hist,integral):
     error_hist = error_update(current_pose,desired_pose,error_hist)
     calculated_setpoint = Attitude_Setpoint()
 
-    calculated_setpoint.thrust = altitude_controller(error_hist,integral)
-    calculated_setpoint.yaw_rate =  yaw_controller(error_hist,integral)
+    calculated_setpoint.thrust, integral = altitude_controller(error_hist,integral)
+    calculated_setpoint.yaw_rate , integral =  yaw_controller(error_hist,integral)
 
     calculated_setpoint.pitch, calculated_setpoint.roll, integral = position_controller(error_hist,integral)
-
+    print(calculated_setpoint)
     return calculated_setpoint
 
 def altitude_controller(error, integral):
@@ -83,7 +90,7 @@ def altitude_controller(error, integral):
 
 def altitude_proportional(error):
     p = 0
-    return p * error[0].z
+    return p * error[0].y
 
 def altitude_integral(error,integral):
     i = 0
@@ -119,7 +126,9 @@ def yaw_transform(global_position,yaw):
     return rel_position
 
 def get_yaw(orientation):
-    current_euler = tf.transformations.euler_from_quaternion(orientation)
+    print(orientation)
+    explicit_quat = [orientation.x, orientation.y, orientation.z, orientation.w]
+    current_euler = tf.transformations.euler_from_quaternion(explicit_quat)
     return current_euler[2]
 
 def position_controller(error,integral):
@@ -132,11 +141,11 @@ def position_controller(error,integral):
     roll_integral(error,integral)
     roll_derivitive(error)
 
-    return pitch, roll, integral
+    return 0.0, 0.0, integral
 
 def pitch_proportional(error):
-    
-    return pitch_proportional(error)
+    p = 0
+    return p * error[0].x
 
 def pitch_integral(error,integral):
     i = 0
@@ -145,8 +154,8 @@ def pitch_derivitive(error):
     d = 0
 
 def roll_proportional(error):
-    
-    return pitch_proportional(error)
+    p = 0
+    return p * error[0].z
 
 def roll_integral(error,integral):
     i = 0
@@ -154,13 +163,20 @@ def roll_integral(error,integral):
 def roll_derivitive(error):
     d = 0
 
-def optitrack_callback(opti_message,recieved_bool,position_holder): #TODO: Write callback
-    position_holder = opti_message.pose
-    recieved_bool = True
+def optitrack_callback(opti_message): #TODO: Write callback
+    global recieved_optitrack
+    global current_pose
 
-def trajectory_callback(trajectory,recieved_bool,trajectory_holder): #TODO: Write callback
-    trajectory_holder = trajectory
-    recieved_bool = True
+    current_pose = opti_message.pose
+    recieved_optitrack = True
+
+def trajectory_callback(trajectory_in): #TODO: Write callback
+    global trajectory
+    global recieved_trajectory
+
+    if recieved_trajectory == False:
+        trajectory = trajectory_in
+    recieved_trajectory = True
 
 
 
@@ -168,15 +184,11 @@ if __name__ == '__main__':
     rospy.init_node('position_controller_node')
     status_pub = rospy.Publisher('pid_controller/status',String,queue_size=2)
 
-    recieved_trajectory = False
-    trajectory = PoseArray()
-    recieved_optitrack = False
-    current_pose = Pose()
-
     setpoint_pub = rospy.Publisher('controller/ypr',Attitude_Setpoint,queue_size=2)
-    rospy.Subscriber('optitrack/drone_pose',PoseStamped,optitrack_callback,(recieved_optitrack,current_pose))
+    rospy.Subscriber('/vrpn_client_node/Crazyflie/pose',PoseStamped,optitrack_callback)
     #rospy.Subscriber('trajectory/drone_goal',Pose)
-    rospy.Subscriber('trajectory/drone_trajectory',PoseArray,(recieved_trajectory,trajectory))
+
+    rospy.Subscriber('/trajectory/drone_trajectory',PoseArray,trajectory_callback)
     error = [Attitude_Error()]
     integral = Attitude_Error()
 
@@ -185,7 +197,7 @@ if __name__ == '__main__':
     r = rospy.Rate(100)
     sequence = 0
     while not rospy.is_shutdown():
-        if(recieved_trajectory == True and recieved_optitrack == True):
+        if(recieved_trajectory == True and recieved_optitrack == True and sequence < len(trajectory.poses)):
             desired_pose = trajectory.poses[sequence]
             setpoint_pub.publish(spin_controller(current_pose,desired_pose,error,integral))
             sequence = sequence + 1

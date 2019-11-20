@@ -42,10 +42,10 @@ if __name__ == '__main__':
     target_location.position.y = 10
     target_location.position.z = 15
 
-    traj_pub = rospy.Publisher("trajectory_array",PoseArray,queue_size=10)
+    traj_pub = rospy.Publisher("trajectory/drone_trajectory",PoseArray,queue_size=10)
 
     #These subscribers currently use the vrpn_client_node library and not Bedillian's I plan on writiing a handler that deals with them seperately and publishes them to identical topics so that this node is agnostic to the data source
-    rospy.Subscriber("/vrpn_client_node/Drone/pose", PoseStamped, optitrak_callback,callback_args=drone_location) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
+    rospy.Subscriber("/vrpn_client_node/Crazyflie/pose", PoseStamped, optitrak_callback,callback_args=drone_location) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
     rospy.Subscriber("/vrpn_client_node/Target/pose", PoseStamped, optitrak_callback,callback_args=target_location) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
 
     target_z_offset = .5 #Amount of distance above target we need to be to capture it. #TODO: Set on the rosparam server
