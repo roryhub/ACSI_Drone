@@ -5,4 +5,10 @@
 
 	<node pkg="acsi_trajectory" type="trajectory_node.py"  name ="trajectory_generator" output="screen"/>
 
+	<node pkg="acsi_controller" type="position_control_node.py"  name ="controller_node" output="screen"/>
+
+	<node pkg="acsi_crazyflie" type="crazyflie_comms_node.py"  name ="comms_node" output="screen"/>
+
+	<include file="$(find acsi_vrpn_client)/launch/Wean_Motive.launch"/>
+
 </launch>
