@@ -12,18 +12,27 @@ from acsi_trajectory import minimum_jerk as traj
 from geometry_msgs.msg import Point, PoseStamped, PoseArray, Pose
 
 
+drone_location = Pose() 
+target_location = Pose()
 
-def optitrak_callback(optitrak_location, callback_args):
+drone_received = False
+target_received = False
 
-    '''
-    Assigns the PoseStamped data to whatever Pose variable you pass it, dropping the header
-    '''
-    container = callback_args[0]
-    container = optitrak_location.pose
 
-    received_bool = callback_args[1]
-    received_bool = True
+def drone_callback(optitrak_location):
+    global drone_location, drone_received
 
+    drone_location = optitrak_location.pose
+    target_y_offset = .5 #Amount of distance above target we need to be to capture it. #TODO: Set on the rosparam server
+    target_location.position.y += target_y_offset
+    drone_received = True
+
+
+def target_callback(optitrak_location):
+    global target_location, target_received
+]
+    target_location = optitrak_location.pose
+    target_received = True
 
 
 
@@ -33,20 +42,12 @@ if __name__ == '__main__':
 
     r = rospy.Rate(.2) #Amount of times per second new trajectory will be generated and rospy loop will run #TODO: Set on the rosparam server
 
-    drone_location = Pose() 
-    target_location = Pose()
-
-    drone_received = False
-    target_received = False
-
     traj_pub = rospy.Publisher("trajectory/drone_trajectory",PoseArray,queue_size=10)
 
     #These subscribers currently use the vrpn_client_node library and not Bedillian's I plan on writiing a handler that deals with them seperately and publishes them to identical topics so that this node is agnostic to the data source
-    rospy.Subscriber("/vrpn_client_node/Crazyflie/pose", PoseStamped, optitrak_callback,callback_args=[drone_location, drone_received]) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
-    rospy.Subscriber("/vrpn_client_node/Target/pose", PoseStamped, optitrak_callback,callback_args=[target_location, target_received]) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
+    rospy.Subscriber("/vrpn_client_node/Crazyflie/pose", PoseStamped, drone_callback) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
+    rospy.Subscriber("/vrpn_client_node/Target/pose", PoseStamped, target_callback) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
 
-    target_y_offset = .5 #Amount of distance above target we need to be to capture it. #TODO: Set on the rosparam server
-    target_location.position.y += target_y_offset
 
     while not rospy.is_shutdown():
 
