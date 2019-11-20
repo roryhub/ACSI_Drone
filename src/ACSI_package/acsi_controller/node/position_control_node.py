@@ -28,12 +28,12 @@ def yaw_difference(current_quaternion,desired_quaternion):
     current_explicit_quat = [current_quaternion.x, current_quaternion.y, current_quaternion.z, current_quaternion.w]
     desired_explicit_quat = [desired_quaternion.x, desired_quaternion.y, desired_quaternion.z, desired_quaternion.w]
 
-    quat_diff =tf.transformations.quaternion_multiply(desired_explicit_quat,tf.transformations.quaternion_conjugate(current_explicit_quat))
+    quat_diff =tf.transformations.quaternion_multiply(desired_explicit_quat,tf.transformations.quaternion_conjugate(current_explicit_quat)) #Maybe ypr convention is wrong
     euler_diff = tf.transformations.euler_from_quaternion(quat_diff)
 
     return euler_diff[2]
 
-def error_update(current_pose,desired_pose,error_hist): #TODO: Update to track error in the drone frame
+def error_update(current_pose,desired_pose,error_hist):
     
     if len(error_hist) == 1:
         error_calc(current_pose,desired_pose,error_hist)
@@ -44,8 +44,7 @@ def error_update(current_pose,desired_pose,error_hist): #TODO: Update to track e
         error_hist.insert(0,Attitude_Error())
         error_calc(current_pose,desired_pose,error_hist)
         error_hist.pop()
-
-    return error_hist        
+    return error_hist     
 
 def error_calc(current_pose,desired_pose,error_hist):
 
@@ -69,58 +68,56 @@ def error_calc(current_pose,desired_pose,error_hist):
 
     error_hist[0] = rel_err
 
-def spin_controller(current_pose,desired_pose,error_hist,integral):
+def spin_controller(current_pose,desired_pose,error_hist,integral): #
 
     error_hist = error_update(current_pose,desired_pose,error_hist)
     calculated_setpoint = Attitude_Setpoint()
 
     calculated_setpoint.thrust, integral = altitude_controller(error_hist,integral)
-    calculated_setpoint.yaw_rate , integral =  yaw_controller(error_hist,integral)
+    calculated_setpoint.yaw_rate, integral =  yaw_controller(error_hist,integral)
 
     calculated_setpoint.pitch, calculated_setpoint.roll, integral = position_controller(error_hist,integral)
     print(calculated_setpoint)
     return calculated_setpoint
 
-def altitude_controller(error, integral):
-    thrust = 33000
-
+def altitude_controller(error, integral):#
+    thrust = 40000 + altitude_proportional(error)
+    if thrust >= 65535:
+        thrust = 65534
     return thrust, integral
 
-def altitude_proportional(error):
-    p = 0
+def altitude_proportional(error):#
+    p = 33000/2.5
     return p * error[0].y
 
-def altitude_integral(error,integral):
+def altitude_integral(error,integral):#
     i = 0
 
-def altitude_derivitive(error):
+def altitude_derivitive(error):#
     d = 0
 
-def yaw_controller(error, integral):
+def yaw_controller(error, integral):#
 
     yaw_rate = 0
 
-    yaw_p = 0
-    yaw_i = 0
-    yaw_d = 0
-
     return yaw_rate, integral
 
-def yaw_proportional(error):
+def yaw_proportional(error):#
     p = 0
     return p * error[0].yaw_rate
 
-def yaw_integral(error,integral):
+def yaw_integral(error,integral):#
     i = 0
 
-def yaw_derivitive(error):
+def yaw_derivitive(error):#
     d = 0
 
 def yaw_transform(global_position,yaw):
 
     rot = -yaw
     rot_matrix = np.array([[cos(rot), -sin(rot)],[sin(rot), cos(rot)]])
-    rel_position = rot_matrix*np.array([[global_position.x],[global_position.z]])
+    position_vector = np.array([[global_position.x],[global_position.z]])
+    rel_position = np.dot(rot_matrix,position_vector)
     return rel_position
 
 def get_yaw(orientation):
@@ -128,45 +125,47 @@ def get_yaw(orientation):
     current_euler = tf.transformations.euler_from_quaternion(explicit_quat)
     return current_euler[2]
 
-def position_controller(error,integral):
+def position_controller(error,integral):#
 
-    pitch_proportional(error)
+    pitch_set = pitch_proportional(error)
     pitch_integral(error,integral)
     pitch_derivitive(error)
 
-    roll_proportional(error)
+    roll_set = roll_proportional(error)
     roll_integral(error,integral)
     roll_derivitive(error)
 
-    return 0.0, 0.0, integral
+    return pitch_set, roll_set, integral
 
-def pitch_proportional(error):
-    p = 0
-    return p * error[0].x
-
-def pitch_integral(error,integral):
-    i = 0
-
-def pitch_derivitive(error):
-    d = 0
-
-def roll_proportional(error):
-    p = 0
+def pitch_proportional(error):# needs sat
+    p = .4
+    #sat
     return p * error[0].z
 
-def roll_integral(error,integral):
+def pitch_integral(error,integral):#
     i = 0
 
-def roll_derivitive(error):
+def pitch_derivitive(error):#
     d = 0
 
-def optitrack_callback(opti_message):
+def roll_proportional(error):# needs sat
+    p = .4
+    #sat
+    return p * error[0].x
+
+def roll_integral(error,integral):#
+    i = 0
+
+def roll_derivitive(error):#
+    d = 0
+
+def optitrack_callback(opti_message):#
     global current_pose, recieved_optitrack
 
     current_pose = opti_message.pose
     recieved_optitrack = True
 
-def trajectory_callback(trajectory_in):
+def trajectory_callback(trajectory_in):#
     global recieved_trajectory, trajectory
 
     if recieved_trajectory == False and len(trajectory_in.poses) > 2:
@@ -187,16 +186,27 @@ if __name__ == '__main__':
     integral = Attitude_Error()
 
     desired_pose = Pose()
+    desired_pose.position.x = 0
+    desired_pose.position.y = 1.5
+    desired_pose.position.z = 0
+    desired_pose.orientation.x = 0
+    desired_pose.orientation.y = 0
+    desired_pose.orientation.z = 0
+    desired_pose.orientation.w = 1
 
     r = rospy.Rate(100)
     sequence = 0
     while not rospy.is_shutdown():
         if(recieved_trajectory == True and recieved_optitrack == True and sequence < len(trajectory.poses)):
-            desired_pose = trajectory.poses[sequence]
+            #desired_pose = trajectory.poses[sequence]
+            #spin_controller(current_pose,desired_pose,error,integral)
             setpoint_pub.publish(spin_controller(current_pose,desired_pose,error,integral))
             sequence = sequence + 1
         else:
-            pass
+            setpoint_pub.publish(spin_controller(current_pose,desired_pose,error,integral))
+            #spin_controller(current_pose,desired_pose,error,integral)
+
+
 
         
         r.sleep()
