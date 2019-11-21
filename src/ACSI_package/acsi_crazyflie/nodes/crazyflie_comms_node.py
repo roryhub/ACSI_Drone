@@ -45,7 +45,6 @@ def setpoint_manager(drone):
         command_lock.acquire()
         drone._cf.commander.send_setpoint(command_goal.roll, command_goal.pitch, command_goal.yaw_rate, int(command_goal.thrust))
         command_lock.release()
-        print(command_goal)
         r.sleep()
 
 
@@ -127,8 +126,10 @@ if __name__ == '__main__':
     crazy_thread = threading.Thread(target=setpoint_manager,daemon=True,args=[le])
 
     while not rospy.is_shutdown():
+        print(command_goal)
 
         if le.start_thread:
+
             print("Successfully connected to Crazyflie")
             crazy_thread.start()
             le.start_thread = False
