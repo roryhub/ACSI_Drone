@@ -23,7 +23,6 @@ recieved_optitrack = False
 current_pose = Pose()
 trajectory = PoseArray()
 
-#TODO: Possibly make error msg type to handle the data in a better struct as well as the integral data
 #TODO: May need to check axis convention to align with optitrack
 
 def five_point_stencil(error,Ts):
@@ -37,7 +36,7 @@ def five_point_stencil(error,Ts):
     except:
         print('division by zero')
 
-    print(derivitive)
+    #print(derivitive)
 
     return derivitive
 
@@ -105,7 +104,7 @@ def spin_controller(current_pose,desired_pose,error_hist,integral): #
     return calculated_setpoint
 
 def altitude_controller(error, integral,derivitive):#
-    thrust = 40000 + altitude_proportional(error) - altitude_derivitive(error,derivitive)
+    thrust = 47000 + altitude_proportional(error) - altitude_derivitive(error,derivitive)
     if thrust >= 65535:
         thrust = 65534
     if thrust < 0:
@@ -114,7 +113,7 @@ def altitude_controller(error, integral,derivitive):#
     return thrust, integral
 
 def altitude_proportional(error):#
-    p = 25000/1.5 # original 1/1.5
+    p = 25000/2 # original 1/1.5
     return p * error[0].y
 
 def altitude_integral(error ,integral):#
@@ -245,6 +244,8 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         current_setpoint = spin_controller(current_pose,desired_pose,error,integral)
         setpoint_pub.publish(current_setpoint)
+        print(error[0])
+        print(current_setpoint.thrust)
 
         #print('Err x: ' + str(error[0].x) + '   -----   roll:' + str(current_setpoint.roll))
         #print('Err y: ' + str(error[0].y) + '   -----   thrust:' + str(current_setpoint.thrust))
