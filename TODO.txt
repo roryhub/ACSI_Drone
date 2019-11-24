@@ -1,0 +1,13 @@
+acsi_mambo:
+
+	Need to rewrite comms node to send and recieve the correct messages now that its been changed.
+	Need to make position controller with correct internal gains for the position controller for mambo. The current system should work
+	Need to determine what the feedforward thrust should be and tune the height controller in accordance to the original controller
+	Need to make sure the axis are appropriately aligned
+	
+acsi_crazyflie:
+	
+	Need to test yaw control
+	Need to test trajectory following with current controller design
+	Need to isolate plant model for everthing on the drone for use in Matlab so the others can control it
+

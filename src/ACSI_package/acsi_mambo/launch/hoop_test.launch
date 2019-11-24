@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!--CSV-->
+
+	<node pkg="dronecomms" type="interpolateTrajectories.py"  name ="" output="screen" launch-prefix="gnome-terminal -e"/>
+
+	<node pkg="dronecomms" type="hoop_trajectory.py" name ="hoop_test" output="screen" launch-prefix="gnome-terminal -e"/>
+
+	<node pkg="nnrosnode" type="nnrosnode_node" name ="nnrosnode" required="true" output="screen"/>
+
+	<node pkg="dronecomms" type="droneComms.py" name ="droneComms" required="true" output="screen"/>
+
+	<node pkg="dronecomms" type="waypoint_manager.py" name ="" output="screen" launch-prefix="gnome-terminal -e"/>
+
+
+</launch>
