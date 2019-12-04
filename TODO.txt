@@ -7,7 +7,15 @@ acsi_mambo:
 	
 acsi_crazyflie:
 	
-	Need to test yaw control
-	Need to test trajectory following with current controller design
-	Need to isolate plant model for everthing on the drone for use in Matlab so the others can control it
+	Need to fix the drone physically
+	Write trajectory handling into PID position controller for minimum project completion (possibly add height integrator or integration in general)
+	Need to program MPC into the position controller 
+	Need to determine the correct plant for MPC from isolated model
 
+
+general:
+
+	Write state machine with GUI in Kivy or Javascript
+	Need to go through and seperate the nodes from the python libraries
+	Integrate the mambo
+	Add Source One support
