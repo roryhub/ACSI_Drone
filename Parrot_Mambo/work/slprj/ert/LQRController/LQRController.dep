@@ -1,0 +1,11 @@
+LQRController.o LQRController.o: LQRController.c LQRController.h \
+ /home/cerlabcontrol/Documents/MATLAB/ParrotControlGit/work/slprj/ert/_sharedutils/rtwtypes.h \
+ LQRController_types.h LQRController_private.h
+
+LQRController.h:
+
+/home/cerlabcontrol/Documents/MATLAB/ParrotControlGit/work/slprj/ert/_sharedutils/rtwtypes.h:
+
+LQRController_types.h:
+
+LQRController_private.h:

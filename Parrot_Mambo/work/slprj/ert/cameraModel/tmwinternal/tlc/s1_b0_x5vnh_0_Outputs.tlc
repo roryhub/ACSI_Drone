@@ -1,0 +1,138 @@
+%implements s1_b0_x5vnh_0_Outputs "C"
+
+%function Outputs(block, system) Output
+%assign cfgTxt = ""
+%openfile cfgTxt
+%assign localVarDecl = ""
+%openfile localVarDecl
+
+int32_T plane;
+int32_T planeOffset;
+int32_T i;
+int32_T j;
+int32_T indxO;
+int32_T indxI;
+%closefile localVarDecl
+%assign tlcOutputsFcnOfS0B0 = OpaqueTLCBlockFcn("Outputs", 0, 0, 0, 1)
+%if !WHITE_SPACE(tlcOutputsFcnOfS0B0)
+/* {S!d142}S-Function (vrsfunc): '<Root>/On-Board Camera' */
+%<SLibCG_DumpSSCode("/*@[9e54*/",tlcOutputsFcnOfS0B0,"/*@]*/")>\
+%endif
+/* {S!d144}S-Function (sviprotate): '<Root>/Rotate' */
+/*@>7ae6*/indxI/*@>bf7*/ = /*@>9f48*/0;
+/*@>7ae9*/planeOffset/*@>bff*/ = /*@>9f4b*/119;
+/*@>6ddf*/for (/*@>9ff8*/plane = /*@>7bc4*/0; /*@>a000*/plane < /*@>7bc5*/3; /*@>9ffd*/plane/*@>a020*/++) {
+/*@>6dfd*/    for (/*@>a006*/i = /*@>7bc9*/0; /*@>a00e*/i < /*@>7bca*/120; /*@>a00b*/i/*@>a021*/++) {
+        /*@>7aef*/indxO/*@>c16*/ = /*@>7aeb*/planeOffset/*@>541b*/ - /*@>7aed*/i;
+/*@>6e16*/        for (/*@>a014*/j = /*@>7bce*/0; /*@>a01c*/j < /*@>7bcf*/160; /*@>a019*/j/*@>a025*/++) {
+            /*@>995c*/cameraModel_B./*@>a22f*/Rotate/*@>65e8*/[/*@>7b4b*/indxO]/*@>c22*/ = /*@>9962*/cameraModel_B./*@>a232*/Blue/*@>9557*/[/*@>9554*/indxI];
+            /*@>7af4*/indxI/*@>a027*/++;
+            /*@>7af8*/indxO/*@>a028*/ += /*@>7ad3*/120;
+        }
+    }
+    /*@>7afc*/planeOffset/*@>a023*/ += /*@>7c32*/19200;
+}
+/* {E!d144}End of S-Function (sviprotate): '<Root>/Rotate' */
+/*@>6331*/for (/*@>9fdc*/indxI = /*@>7b15*/0; /*@>9fe4*/indxI < /*@>7b14*/160; /*@>9fe1*/indxI/*@>a022*/++) {
+/*@>6321*/    for (/*@>9fea*/planeOffset = /*@>7b10*/0; /*@>9ff2*/planeOffset < /*@>7b0f*/120; /*@>9fef*/planeOffset/*@>a024*/++) {
+        /* {S!d146}Selector: '<S1>/Blue' incorporates:
+ *  Selector: '<S1>/Green'
+ *  Selector: '<S1>/Red'
+ */
+        /*@>8c87*/plane/*@>8c89*/ = /*@>7bfe*/120/*@>7c6f*/ * /*@>7b0d*/indxI/*@>74e6*/ + /*@>7b0b*/planeOffset;
+        /*@>9974*/cameraModel_B./*@>a235*/Blue/*@>74d2*/[plane]/*@>6316*/ = /*@>997a*/cameraModel_B./*@>a238*/Rotate/*@>955f*/[/*@>955b*/plane/*@>9559*/ + /*@>955c*/38400];
+        /* {S!d148}Selector: '<S1>/Red' */
+        /*@>9980*/cameraModel_B./*@>a23b*/Transpose2/*@>74f7*/[plane]/*@>63ae*/ = /*@>9986*/cameraModel_B./*@>a23e*/Rotate/*@>9565*/[plane];
+        /* {S!d150}Selector: '<S1>/Green' */
+        /*@>99aa*/cameraModel_B./*@>a24d*/Transpose3/*@>750d*/[plane]/*@>6447*/ = /*@>99b0*/cameraModel_B./*@>a250*/Rotate/*@>957f*/[plane/*@>9579*/ + /*@>957c*/19200];
+    }
+}
+/* {S!d152}S-Function (svipcolorconv): '<S1>/Color Space  Conversion' */
+/*@>6dbc*/for (/*@>9fce*/i = /*@>7bbf*/0; /*@>9fd6*/i < /*@>7bc0*/19200; /*@>9fd3*/i/*@>a026*/++) {
+    /*@>9992*/cameraModel_B./*@>a241*/ColorSpaceConversion_o1/*@>65b2*/[/*@>7b43*/i]/*@>10c6*/ = /*@>7e53*/(uint8_T)((((/*@>9998*/cameraModel_B./*@>a244*/Transpose2/*@>956b*/[/*@>9568*/i]/*@>7ca9*/ * /*@>7dfc*/16829U/*@>778d*/ + /*@>999e*/cameraModel_B./*@>a247*/Transpose3/*@>9571*/[/*@>956e*/i]/*@>7cad*/ * /*@>7dfe*/33039U)/*@>778f*/ + /*@>99a4*/cameraModel_B./*@>a24a*/Blue/*@>9577*/[/*@>9574*/i]/*@>7cb1*/ * /*@>7e00*/6416U)/*@>7790*/ + 1081344U)/*@>7ca5*/ >> /*@>7ca4*/16);
+    /*@>99b6*/cameraModel_B./*@>a253*/ColorSpaceConversion_o2/*@>66c7*/[/*@>7b4f*/i]/*@>10cd*/ = /*@>10cc*/(uint8_T)((((/*@>99bc*/cameraModel_B./*@>a256*/Blue/*@>9585*/[/*@>9582*/i]/*@>7c93*/ * /*@>7e02*/28784U/*@>7791*/ - /*@>99c2*/cameraModel_B./*@>a259*/Transpose2/*@>958b*/[/*@>9588*/i]/*@>7c97*/ * /*@>7e04*/9714U)/*@>7793*/ - /*@>99c8*/cameraModel_B./*@>a25c*/Transpose3/*@>9591*/[/*@>958e*/i]/*@>7c9b*/ * /*@>7e06*/19071U)/*@>7794*/ + 8421376U)/*@>7c8f*/ >> /*@>7c8e*/16);
+    /*@>99ce*/cameraModel_B./*@>a25f*/ColorSpaceConversion_o3/*@>67aa*/[/*@>7b53*/i]/*@>10d4*/ = /*@>10d3*/(uint8_T)((((/*@>99d4*/cameraModel_B./*@>a262*/Transpose2/*@>9597*/[/*@>9594*/i]/*@>7c7d*/ * /*@>7e08*/28784U/*@>7795*/ - /*@>99da*/cameraModel_B./*@>a265*/Blue/*@>959d*/[/*@>959a*/i]/*@>7c81*/ * /*@>7e0a*/4681U)/*@>7797*/ - /*@>99e0*/cameraModel_B./*@>a268*/Transpose3/*@>95a3*/[/*@>95a0*/i]/*@>7c85*/ * /*@>7e0c*/24103U)/*@>7798*/ + 8421376U)/*@>7c79*/ >> /*@>7c78*/16);
+}
+/* {E!d152}End of S-Function (svipcolorconv): '<S1>/Color Space  Conversion' */
+
+/* {S!d154}Math: '<S1>/Transpose1' */
+/*@>64d3*/for (/*@>9fb2*/indxI = /*@>7b3d*/0; /*@>9fba*/indxI < /*@>7b3c*/120; /*@>9fb7*/indxI/*@>a029*/++) {
+/*@>64c3*/    for (/*@>9fc0*/planeOffset = /*@>7b38*/0; /*@>9fc8*/planeOffset < /*@>7b37*/160; /*@>9fc5*/planeOffset/*@>a02a*/++) {
+        /*@>99ec*/cameraModel_B./*@>a26b*/Transpose3/*@>7524*/[/*@>7b31*/planeOffset/*@>7520*/ + /*@>7c05*/160/*@>7cb4*/ * /*@>7b33*/indxI]/*@>64b8*/ = /*@>99f2*/cameraModel_B./*@>a26e*/ColorSpaceConversion_o1/*@>95ae*/[/*@>95a7*/120/*@>95a6*/ * /*@>95a9*/planeOffset/*@>95a5*/ + /*@>95ab*/indxI];
+    }
+}
+/* {E!d154}End of Math: '<S1>/Transpose1' */
+
+/* {S!d156}Selector: '<S1>/y1' incorporates:
+ *  Constant: '<S1>/Constant'
+ */
+/*@>5bd5*/for (/*@>9fa4*/i = /*@>7b06*/0; /*@>9fac*/i < /*@>7b04*/9600; /*@>9fa9*/i/*@>a02b*/++) {
+    /*@>99fe*/cameraModel_B./*@>a271*/MatrixConcatenate/*@>6805*/[/*@>7b5c*/i]/*@>5bb9*/ = /*@>9a04*/cameraModel_B./*@>a274*/Transpose3/*@>95c0*/[/*@>95b7*/(int32_T)/*@>95ba*/rtCP_Constant_Value/*@>95b9*/[/*@>95bc*/i]/*@>95b6*/ - /*@>95bd*/1];
+}
+/* {E!d156}End of Selector: '<S1>/y1' */
+
+/* {S!d158}Math: '<S1>/Transpose2' */
+/*@>685d*/for (/*@>9f88*/indxI = /*@>7b6e*/0; /*@>9f90*/indxI < /*@>7b6d*/120; /*@>9f8d*/indxI/*@>a02c*/++) {
+/*@>684d*/    for (/*@>9f96*/planeOffset = /*@>7b69*/0; /*@>9f9e*/planeOffset < /*@>7b68*/160; /*@>9f9b*/planeOffset/*@>a02e*/++) {
+        /*@>9a1c*/cameraModel_B./*@>a27d*/Transpose2/*@>75e6*/[/*@>7b62*/planeOffset/*@>75e2*/ + /*@>7c09*/160/*@>7cbd*/ * /*@>7b64*/indxI]/*@>6842*/ = /*@>9a22*/cameraModel_B./*@>a280*/ColorSpaceConversion_o2/*@>95dd*/[/*@>95d6*/120/*@>95d5*/ * /*@>95d8*/planeOffset/*@>95d4*/ + /*@>95da*/indxI];
+    }
+}
+/*@>68d7*/for (/*@>9f7a*/i = /*@>7b7b*/0; /*@>9f82*/i < /*@>7b7a*/9600; /*@>9f7f*/i/*@>a02d*/++) {
+    /* {S!d160}Selector: '<S1>/u' incorporates:
+ *  Constant: '<S1>/Constant2'
+ *  Math: '<S1>/Transpose2'
+ */
+    /*@>9a10*/cameraModel_B./*@>a277*/MatrixConcatenate/*@>68c3*/[/*@>7b77*/9600/*@>68c8*/ + /*@>7b78*/i]/*@>68cc*/ = /*@>9a16*/cameraModel_B./*@>a27a*/Transpose2/*@>95d2*/[/*@>95c9*/(int32_T)/*@>95cc*/rtCP_Constant2_Value/*@>95cb*/[/*@>95ce*/i]/*@>95c8*/ - /*@>95cf*/1];
+    /* {S!d162}Selector: '<S1>/y2' incorporates:
+ *  Constant: '<S1>/Constant1'
+ */
+    /*@>9a28*/cameraModel_B./*@>a283*/MatrixConcatenate/*@>6932*/[/*@>7b86*/i/*@>6937*/ + /*@>7b88*/19200]/*@>5be3*/ = /*@>9a2e*/cameraModel_B./*@>a286*/Transpose3/*@>95ef*/[/*@>95e6*/(int32_T)/*@>95e9*/rtCP_Constant1_Value/*@>95e8*/[/*@>95eb*/i]/*@>95e5*/ - /*@>95ec*/1];
+}
+/* {S!d164}Math: '<S1>/Transpose3' */
+/*@>698c*/for (/*@>9f5e*/indxI = /*@>7b99*/0; /*@>9f66*/indxI < /*@>7b98*/120; /*@>9f63*/indxI/*@>a02f*/++) {
+/*@>697c*/    for (/*@>9f6c*/planeOffset = /*@>7b94*/0; /*@>9f74*/planeOffset < /*@>7b93*/160; /*@>9f71*/planeOffset/*@>a031*/++) {
+        /*@>9a40*/cameraModel_B./*@>a28f*/Transpose2/*@>7601*/[/*@>7b8d*/planeOffset/*@>75fd*/ + /*@>7c0a*/160/*@>7cc9*/ * /*@>7b8f*/indxI]/*@>6971*/ = /*@>9a46*/cameraModel_B./*@>a292*/ColorSpaceConversion_o3/*@>960c*/[/*@>9605*/120/*@>9604*/ * /*@>9607*/planeOffset/*@>9603*/ + /*@>9609*/indxI];
+    }
+}
+/*@>6a06*/for (/*@>9f50*/indxI = /*@>7ba6*/0; /*@>9f58*/indxI < /*@>7ba5*/9600; /*@>9f55*/indxI/*@>a030*/++) {
+    /* {S!d166}Selector: '<S1>/v' incorporates:
+ *  Constant: '<S1>/Constant3'
+ *  Math: '<S1>/Transpose3'
+ */
+    /*@>9a34*/cameraModel_B./*@>a289*/MatrixConcatenate/*@>69f2*/[/*@>7ba2*/28800/*@>69f7*/ + /*@>7ba3*/indxI]/*@>69fb*/ = /*@>9a3a*/cameraModel_B./*@>a28c*/Transpose2/*@>9601*/[/*@>95f8*/(int32_T)/*@>95fb*/rtCP_Constant3_Value/*@>95fa*/[/*@>95fd*/indxI]/*@>95f7*/ - /*@>95fe*/1];
+    /* {S!d168}Math: '<S1>/Transpose' */
+    /*@>8cb7*/planeOffset/*@>8cb9*/ = /*@>7c0e*/indxI/*@>7cf1*/ << /*@>7cf0*/2;
+    /*@>9547*/rty_image_data/*@>7671*/[/*@>8cbb*/planeOffset]/*@>7670*/ = /*@>9a4c*/cameraModel_B./*@>a295*/MatrixConcatenate/*@>9612*/[/*@>960f*/indxI];
+    /*@>954a*/rty_image_data/*@>768a*/[/*@>7c1d*/1/*@>768d*/ + planeOffset]/*@>7689*/ = /*@>9a52*/cameraModel_B./*@>a298*/MatrixConcatenate/*@>961a*/[/*@>9616*/indxI/*@>9614*/ + /*@>9617*/9600];
+    /*@>954d*/rty_image_data/*@>76a3*/[/*@>7c27*/2/*@>76a6*/ + planeOffset]/*@>76a2*/ = /*@>9a58*/cameraModel_B./*@>a29b*/MatrixConcatenate/*@>9622*/[/*@>961e*/indxI/*@>961c*/ + /*@>961f*/19200];
+    /*@>9550*/rty_image_data/*@>76bc*/[/*@>7c31*/3/*@>76bf*/ + planeOffset]/*@>76bb*/ = /*@>9a5e*/cameraModel_B./*@>a29e*/MatrixConcatenate/*@>962a*/[/*@>9626*/indxI/*@>9624*/ + /*@>9627*/28800];
+}
+%closefile cfgTxt
+%<cfgTxt>
+%assign rtmArgSys = ::CompiledModel.System[::CompiledModel.System[::CompiledModel.RTWCGModules.RTWCGModule[0].CGSystemIdx].NonInlinedParentSystemIdx]
+%if SysFcnArgNeeded("Output", rtmArgSys.Interface.RTMArgDef, rtmArgSys.CurrentTID, FcnSysModuleIsRateGrouping(rtmArgSys, "Output"))
+%<SLibCG_AccessArg(0, 1, 0)>
+%endif
+%if SLibCG_ArgAccessed(0, 1, 0)
+%<SLibAccessArg(rtmArgSys.Interface.RTMArgDef, "Output", rtmArgSys.CurrentTID, FcnSysModuleIsRateGrouping(rtmArgSys, "Output"))>
+%endif
+%if (IsModelReferenceBaseSys(rtmArgSys) && (IsModelRefScalableBuild() || GenerateClassInterface)) ||...
+(GenerateClassInterface && SLibIsMultiInstanceServer(rtmArgSys))
+%<SLibCG_UndoAccessArg(0, 1, 0)>
+%endif
+%<LibSetSystemField(system, "CachedOutputLocalVars", localVarDecl)>
+%endfunction
+%function OutputsFcnProtoType(block, system) Output
+%assign fcnProtoType = ""
+%openfile fcnProtoType
+static void cameraModel(\
+%assign comma = ""
+%if SLibCG_ArgAccessed(0, 1, 0)
+%<comma>%<::tSimStructType> * const %<::tSimStruct>\
+%assign comma = ", "
+%endif
+%<comma>uint8_T rty_image_data[38400]\
+%assign comma = ", "
+%closefile fcnProtoType
+%<SLibCG_SetFcnProtoType(0, 1, fcnProtoType)>
+%endfunction

@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Info Type="StartUp" Visible="0" Icon="" File="mainModels/parrotMambo.slx" Name="parrotMambo">
+    <Extension Value="7cbe1ab5-4418-4e0c-b5c8-02e257daef7f" Name="StartUpPrev" />
+</Info>

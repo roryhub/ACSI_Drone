@@ -264,7 +264,7 @@ if __name__ == '__main__':
         current_setpoint = spin_controller(current_pose,desired_pose,error,integral)
         if rospy.Time.now().secs-start_time.secs > 10 and rospy.Time.now().secs-start_time.secs < 20:
             print('yaw control')
-            current_setpoint.yaw_rate = -5
+            current_setpoint.yaw_rate = -45
         setpoint_pub.publish(current_setpoint)
         # print(rospy.Time.now().secs-start_time.secs)
 
