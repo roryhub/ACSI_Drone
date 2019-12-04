@@ -233,6 +233,15 @@ if __name__ == '__main__':
     desired_pose.orientation.z = 0
     desired_pose.orientation.w = 1
 
+    desired_pose_2 = Pose()
+    desired_pose_2.position.x = 0
+    desired_pose_2.position.y = 1.5
+    desired_pose_2.position.z = 0
+    desired_pose_2.orientation.x = .25
+    desired_pose_2.orientation.y = 0
+    desired_pose_2.orientation.z = 0
+    desired_pose_2.orientation.w = 1
+
     test_setpoint = Attitude_Setpoint()
     test_setpoint.pitch = 0
     test_setpoint.roll = 0
@@ -240,12 +249,17 @@ if __name__ == '__main__':
     test_setpoint.thrust = 33000
 
     r = rospy.Rate(100)
+    start_time = rospy.Time.now()
     sequence = 0
     while not rospy.is_shutdown():
         current_setpoint = spin_controller(current_pose,desired_pose,error,integral)
         setpoint_pub.publish(current_setpoint)
-        print(error[0])
-        print(current_setpoint.thrust)
+
+        if rospy.Time.now().secs-start_time.secs > 10:
+            desired_pose = desired_pose_2
+
+        #print(error[0])
+        #print(current_setpoint.thrust)
 
         #print('Err x: ' + str(error[0].x) + '   -----   roll:' + str(current_setpoint.roll))
         #print('Err y: ' + str(error[0].y) + '   -----   thrust:' + str(current_setpoint.thrust))
