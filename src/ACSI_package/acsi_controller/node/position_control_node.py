@@ -254,7 +254,7 @@ if __name__ == '__main__':
     test_setpoint = Attitude_Setpoint()
     test_setpoint.pitch = 0
     test_setpoint.roll = 0
-    test_setpoint.yaw_rate = 180
+    test_setpoint.yaw_rate = 0
     test_setpoint.thrust = 33000
 
     r = rospy.Rate(100)
