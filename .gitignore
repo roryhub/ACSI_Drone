@@ -2,3 +2,5 @@
 build
 devel
 cache
+__pycache__/
+*.pyc
