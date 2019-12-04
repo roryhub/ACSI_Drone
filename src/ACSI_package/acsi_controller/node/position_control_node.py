@@ -142,7 +142,7 @@ def yaw_derivitive(error,derivitive):# Need to check what the yaw command actual
 
 def yaw_transform(global_position,yaw):
 
-    rot = -yaw
+    rot = yaw
     rot_matrix = np.array([[cos(rot), -sin(rot)],[sin(rot), cos(rot)]])
     position_vector = np.array([[global_position.x],[global_position.z]])
     rel_position = np.dot(rot_matrix,position_vector)
@@ -233,19 +233,44 @@ if __name__ == '__main__':
     desired_pose.orientation.z = 0
     desired_pose.orientation.w = 1
 
+    desired_pose_2 = Pose()
+    desired_pose_2.position.x = 1
+    desired_pose_2.position.y = 1.5
+    desired_pose_2.position.z = 0
+    desired_pose_2.orientation.x = 0
+    desired_pose_2.orientation.y = 0
+    desired_pose_2.orientation.z = 0
+    desired_pose_2.orientation.w = 1
+
+    desired_pose_3 = Pose()
+    desired_pose_3.position.x = 1
+    desired_pose_3.position.y = -.5
+    desired_pose_3.position.z = 0
+    desired_pose_3.orientation.x = 0
+    desired_pose_3.orientation.y = 0
+    desired_pose_3.orientation.z = 0
+    desired_pose_3.orientation.w = 1
+
     test_setpoint = Attitude_Setpoint()
     test_setpoint.pitch = 0
     test_setpoint.roll = 0
-    test_setpoint.yaw_rate = 180
+    test_setpoint.yaw_rate = 0
     test_setpoint.thrust = 33000
 
     r = rospy.Rate(100)
+    start_time = rospy.Time.now()
     sequence = 0
     while not rospy.is_shutdown():
         current_setpoint = spin_controller(current_pose,desired_pose,error,integral)
+        if rospy.Time.now().secs-start_time.secs > 10 and rospy.Time.now().secs-start_time.secs < 20:
+            print('yaw control')
+            current_setpoint.yaw_rate = -45
         setpoint_pub.publish(current_setpoint)
-        print(error[0])
-        print(current_setpoint.thrust)
+        # print(rospy.Time.now().secs-start_time.secs)
+
+        
+        #print(error[0])
+        #print(current_setpoint.thrust)
 
         #print('Err x: ' + str(error[0].x) + '   -----   roll:' + str(current_setpoint.roll))
         #print('Err y: ' + str(error[0].y) + '   -----   thrust:' + str(current_setpoint.thrust))

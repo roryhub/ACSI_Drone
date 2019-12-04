@@ -1,0 +1,11 @@
+rsedu_image.o rsedu_image.o: \
+ /home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/parrot/src/rsedu_image.c \
+ /home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/parrot/include/rsedu_image.h \
+ /home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/parrot/include/rsedu_vis.h \
+ /home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/parrot/include/rsedu_globalparams.h
+
+/home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/parrot/include/rsedu_image.h:
+
+/home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/parrot/include/rsedu_vis.h:
+
+/home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/parrot/include/rsedu_globalparams.h:

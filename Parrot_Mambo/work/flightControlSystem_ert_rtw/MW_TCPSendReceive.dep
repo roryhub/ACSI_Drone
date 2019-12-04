@@ -1,0 +1,5 @@
+MW_TCPSendReceive.o MW_TCPSendReceive.o: \
+ /home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/shared_linuxservices/src/TCPSendReceive/MW_TCPSendReceive.c \
+ /home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/shared_linuxservices/include/MW_TCPSendReceive.h
+
+/home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/shared_linuxservices/include/MW_TCPSendReceive.h:

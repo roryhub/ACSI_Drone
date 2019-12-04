@@ -1,0 +1,8 @@
+linuxUDP.o linuxUDP.o: \
+ /home/cerlabcontrol/Documents/MATLAB/SupportPackages/R2019a/toolbox/target/supportpackages/parrot/src/linuxUDP.c \
+ /home/cerlabcontrol/Documents/MATLAB/ParrotControlGit/work/flightControlSystem_ert_rtw/rtwtypes.h \
+ /usr/local/MATLAB/R2019a/toolbox/shared/spc/src_ml/extern/include/DAHostLib_rtw.h
+
+/home/cerlabcontrol/Documents/MATLAB/ParrotControlGit/work/flightControlSystem_ert_rtw/rtwtypes.h:
+
+/usr/local/MATLAB/R2019a/toolbox/shared/spc/src_ml/extern/include/DAHostLib_rtw.h:

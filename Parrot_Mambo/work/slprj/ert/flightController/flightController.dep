@@ -1,0 +1,12 @@
+flightController.o flightController.o: flightController.c \
+ flightController.h \
+ /home/cerlabcontrol/Documents/MATLAB/ParrotControlGit/work/slprj/ert/_sharedutils/rtwtypes.h \
+ flightController_types.h flightController_private.h
+
+flightController.h:
+
+/home/cerlabcontrol/Documents/MATLAB/ParrotControlGit/work/slprj/ert/_sharedutils/rtwtypes.h:
+
+flightController_types.h:
+
+flightController_private.h:

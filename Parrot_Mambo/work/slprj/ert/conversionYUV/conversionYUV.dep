@@ -1,0 +1,11 @@
+conversionYUV.o conversionYUV.o: conversionYUV.c conversionYUV.h \
+ /home/cerlabcontrol/Documents/MATLAB/ParrotControlGit/work/slprj/ert/_sharedutils/rtwtypes.h \
+ conversionYUV_types.h conversionYUV_private.h
+
+conversionYUV.h:
+
+/home/cerlabcontrol/Documents/MATLAB/ParrotControlGit/work/slprj/ert/_sharedutils/rtwtypes.h:
+
+conversionYUV_types.h:
+
+conversionYUV_private.h:
