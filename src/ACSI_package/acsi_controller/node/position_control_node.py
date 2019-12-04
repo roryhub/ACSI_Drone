@@ -142,7 +142,7 @@ def yaw_derivitive(error,derivitive):# Need to check what the yaw command actual
 
 def yaw_transform(global_position,yaw):
 
-    rot = -yaw
+    rot = yaw
     rot_matrix = np.array([[cos(rot), -sin(rot)],[sin(rot), cos(rot)]])
     position_vector = np.array([[global_position.x],[global_position.z]])
     rel_position = np.dot(rot_matrix,position_vector)
@@ -262,14 +262,13 @@ if __name__ == '__main__':
     sequence = 0
     while not rospy.is_shutdown():
         current_setpoint = spin_controller(current_pose,desired_pose,error,integral)
+        if rospy.Time.now().secs-start_time.secs > 10 and rospy.Time.now().secs-start_time.secs < 20:
+            print('yaw control')
+            current_setpoint.yaw_rate = -5
         setpoint_pub.publish(current_setpoint)
         # print(rospy.Time.now().secs-start_time.secs)
-        if rospy.Time.now().secs-start_time.secs > 10 and rospy.Time.now().secs-start_time.secs < 20:
-            print('point 2')
-            desired_pose = desired_pose_2
-        elif rospy.Time.now().secs-start_time.secs > 20:
-            print('point 3')
-            desired_pose = desired_pose_3
+
+        
         #print(error[0])
         #print(current_setpoint.thrust)
 
