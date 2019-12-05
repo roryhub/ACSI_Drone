@@ -158,7 +158,7 @@ class MPC:
         return h
 
 
-    def get_trajectory_horizon(self, traj):
+    def get_trajectory_horizon(self, traj):g
         if len(traj) < self.N:
             traj_horizon = traj[:, np.newaxis]
             self.N = len(traj)
@@ -167,9 +167,3 @@ class MPC:
         traj_horizon = traj[:self.N][:, np.newaxis]
 
         return traj_horizon
-
-
-    def update_states(self, U, X):
-        X = self.A @ X + (self.B * U)[:, np.newaxis]
-        
-        return X
