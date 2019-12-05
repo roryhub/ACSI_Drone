@@ -13,6 +13,9 @@ class MPC:
         self.B = B
         self.C = C
         self.N = N
+        self.Q = Q
+        self.R = R
+        self.RD = RD
 
         # precompute these matrices
         self.G = None
@@ -23,11 +26,11 @@ class MPC:
         self.W0 = None
         self.S = None
 
-        self.precompute(Q, R, RD)
+        self.precompute()
     
 
-    def precompute(self, Q, R, RD):
-        Qbar, Rbar, RbarD = self.build_bars(Q, R, RD, self.N)
+    def precompute(self):
+        Qbar, Rbar, RbarD = self.build_bars(self.Q, self.R, self.RD, self.N)
 
         Sx = self.build_Sx(self.A, self.C, self.N)
 
@@ -66,12 +69,17 @@ class MPC:
             C @ np.linalg.matrix_power(A, i) @ B
             for i in range(N)
         ])
-        Su2 = np.array([
-            np.concatenate((i*[0], Su1[:-i]))
-            for i in range(1, N)
-        ]).T
 
-        Su = np.column_stack((Su1, Su2))
+        if N == 1:
+            Su = Su1[:, np.newaxis]
+
+        else:  
+            Su2 = np.array([
+                np.concatenate((i*[0], Su1[:-i]))
+                for i in range(1, N)
+            ]).T
+
+            Su = np.column_stack((Su1, Su2))
 
         return Su
 
@@ -112,34 +120,22 @@ class MPC:
 
         return Fu, Fr, Fx
 
-    
-    def track_trajectory(self, X, U, traj):
-        
-        T = 40
 
-        for i in range(T):
+    def get_control_input(self, X, U, traj):
+        traj_horizon = self.get_trajectory_horizon(traj)
 
-            if i == 0:
-                state_history = np.array([0.0, 0.0])[:, np.newaxis]
-            else:
-                state_history = np.column_stack((state_history, X))
+        q = self.calculate_q(X, U, traj_horizon)
 
-            traj_horizon = self.get_trajectory_horizon(traj, i)
+        W = self.calculate_W(U)
 
-            q = self.calculate_q(X, U, traj_horizon)
+        h = self.calculate_h(W, X)
 
-            W = self.calculate_W(U)
+        sol = solvers.qp(matrix(self.P), matrix(q), matrix(self.G), matrix(h))
 
-            h = self.calculate_h(W, X)
+        Uarr = np.array(sol['x'])
+        U += Uarr[0][0]
 
-            sol = solvers.qp(matrix(self.P), matrix(q), matrix(self.G), matrix(h))
-
-            Uarr = np.array(sol['x'])
-            U += Uarr[0][0]
-
-            X = self.update_states(U, X)
-
-        return state_history
+        return U
 
 
     def calculate_q(self, X, U, ref_horizon):
@@ -162,8 +158,13 @@ class MPC:
         return h
 
 
-    def get_trajectory_horizon(self, traj, i):
-        traj_horizon = traj[i:i + self.N][:, np.newaxis]
+    def get_trajectory_horizon(self, traj):
+        if len(traj) < self.N:
+            traj_horizon = traj[:, np.newaxis]
+            self.N = len(traj)
+            self.precompute()
+
+        traj_horizon = traj[:self.N][:, np.newaxis]
 
         return traj_horizon
 

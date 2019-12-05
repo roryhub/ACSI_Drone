@@ -9,6 +9,8 @@ from mpc import MPC
 class Simulator:
 
     def __init__(self, A, B, C, Q, R, RD, N):
+        self.A = A
+        self.B = B
 
         self.mpc = MPC(A, B, C, Q, R, RD, N)
 
@@ -26,14 +28,27 @@ class Simulator:
 
         X = np.array([0.0, 0.0])[:, np.newaxis]
 
-        state_history = self.mpc.track_trajectory(X, U, self.ref_traj)
+        for i in range(len(self.ref_traj)):
+
+            if i == 0:
+                state_history = np.array([0.0, 0.0])[:, np.newaxis]
+            else:
+                state_history = np.column_stack((state_history, X))
+            
+            remaining_traj = self.ref_traj[i:]
+
+            U = self.mpc.get_control_input(X, U, remaining_traj)
+
+            X = self.update_states(X, U)
 
 
-        fig, ax = plt.subplots()
-        ax.plot(self.t[:40], self.ref_traj[:40])
-        ax.plot(self.t[:40], state_history[0,:])
+        return state_history
+    
 
-        plt.show()
+    def update_states(self, X, U):
+        X = self.A @ X + (self.B * U)[:, np.newaxis]
+        
+        return X
 
 
         
@@ -164,11 +179,17 @@ def main():
 
     sim = Simulator(A, B, C, Q, R, RD, N)
 
-    T = 40
+    T = N
 
     sim.get_reference_trajectory(T, N)
 
-    sim.simulate()
+    state_history = sim.simulate()
+
+    fig, ax = plt.subplots()
+    ax.plot(sim.t, sim.ref_traj)
+    ax.plot(sim.t, state_history[0,:])
+
+    plt.show()
 
 
 if __name__ == '__main__':
