@@ -4,33 +4,44 @@ from scipy import signal
 from cvxopt import matrix, solvers
 
 
-
 class MPC:
 
     def __init__(self, A, B, C, Q, R, RD, N):
+        solvers.options['show_progress'] = False
+
         self.A = A
         self.B = B
         self.C = C
-        self.R = R
-        self.RD = RD
-        self.Q = Q
         self.N = N
 
-        Qbar, Rbar, RbarD = self.build_bars(Q, R, RD, N)
+        # precompute these matrices
+        self.G = None
+        self.P = None
+        self.Fu = None
+        self.Fr = None
+        self.Fx = None
+        self.W0 = None
+        self.S = None
 
-        Sx = self.build_Sx(A, C, N)
+        self.precompute(Q, R, RD)
+    
 
-        Su = self.build_Su(A, B, C, N)
+    def precompute(self, Q, R, RD):
+        Qbar, Rbar, RbarD = self.build_bars(Q, R, RD, self.N)
 
-        self.G = self.build_G(N)
+        Sx = self.build_Sx(self.A, self.C, self.N)
+
+        Su = self.build_Su(self.A, self.B, self.C, self.N)
+
+        self.G = self.build_G(self.N)
         
         self.P = self.build_P(Rbar, RbarD, Qbar, Su)
 
         self.Fu, self.Fr, self.Fx = self.build_Fs(Rbar, Qbar, Su, Sx)
         
-        self.W0 = self.build_W0(N)
+        self.W0 = self.build_W0(self.N)
 
-        self.S = self.build_S(N)
+        self.S = self.build_S(self.N)
     
 
     def build_bars(self, Q, R, RD, N):
@@ -150,10 +161,6 @@ class MPC:
 
         return h
 
-    def update_states(self, U, X):
-        X = self.A @ X + (self.B * U)[:, np.newaxis]
-        
-        return X
 
     def get_trajectory_horizon(self, traj, i):
         traj_horizon = traj[i:i + self.N][:, np.newaxis]
@@ -161,55 +168,7 @@ class MPC:
         return traj_horizon
 
 
-
-
-
-def get_square_wave(T, N):
-    t = np.linspace(1, T + N, T + N)
-    ref = signal.square(t / 6)
-
-    return t, ref
-
-
-
-def main():
-    solvers.options['show_progress'] = False
-
-    A = np.array([
-        [1.0, 1.0],
-        [0.0, 1.0]
-    ])
-    B = np.array([0.0, 1.0])
-    C = np.array([1.0, 0.0])
-
-    Q = 1.0
-    R = 0.1
-    RD = 1.0
-    N = 100
-
-
-    mpc = MPC(A, B, C, Q, R, RD, N)
-
-    T = 40
-
-    t, traj = get_square_wave(T, N)
-
-    U = 0
-
-    X = np.array([0.0, 0.0])[:, np.newaxis]
-
-    state_history = mpc.track_trajectory(X, U, traj)
-
-
-    fig, ax = plt.subplots()
-    ax.plot(t[:40], traj[:40])
-    ax.plot(t[:40], state_history[0,:])
-
-    plt.show()
-
-
-
-
-if __name__ == '__main__':
-
-    main()
+    def update_states(self, U, X):
+        X = self.A @ X + (self.B * U)[:, np.newaxis]
+        
+        return X
