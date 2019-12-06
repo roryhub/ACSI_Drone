@@ -67,7 +67,7 @@ def main():
 
     sim = Simulator(A, B, C, Q, R, RD, N)
 
-    traj_length = 150
+    traj_length = N
 
     sim.get_reference_trajectory(traj_length)
 

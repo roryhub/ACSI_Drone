@@ -9,32 +9,13 @@ class MPC:
     def __init__(self, A, B, C, Q, R, RD, N):
         solvers.options['show_progress'] = False
 
-        self.A = A
-        self.B = B
-        self.C = C
         self.N = N
-        self.Q = Q
-        self.R = R
-        self.RD = RD
 
-        # precompute these matrices
-        self.G = None
-        self.P = None
-        self.Fu = None
-        self.Fr = None
-        self.Fx = None
-        self.W0 = None
-        self.S = None
+        Qbar, Rbar, RbarD = self.build_bars(Q, R, RD, self.N)
 
-        self.precompute()
-    
+        Sx = self.build_Sx(A, C, self.N)
 
-    def precompute(self):
-        Qbar, Rbar, RbarD = self.build_bars(self.Q, self.R, self.RD, self.N)
-
-        Sx = self.build_Sx(self.A, self.C, self.N)
-
-        Su = self.build_Su(self.A, self.B, self.C, self.N)
+        Su = self.build_Su(A, B, C, self.N)
 
         self.G = self.build_G(self.N)
         
