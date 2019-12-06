@@ -70,16 +70,12 @@ class MPC:
             for i in range(N)
         ])
 
-        if N == 1:
-            Su = Su1[:, np.newaxis]
+        Su2 = np.array([
+            np.concatenate((i*[0], Su1[:-i]))
+            for i in range(1, N)
+        ]).T
 
-        else:  
-            Su2 = np.array([
-                np.concatenate((i*[0], Su1[:-i]))
-                for i in range(1, N)
-            ]).T
-
-            Su = np.column_stack((Su1, Su2))
+        Su = np.column_stack((Su1, Su2))
 
         return Su
 
@@ -159,10 +155,11 @@ class MPC:
 
 
     def get_trajectory_horizon(self, traj):
-        if len(traj) < self.N:
-            traj_horizon = traj[:, np.newaxis]
-            self.N = len(traj)
-            self.precompute()
+        # if horizon is greater than trajectory length, increase trajectory by stacking the last position
+        delta = self.N - len(traj)
+        if delta > 0:
+            end_position = np.array([traj[-1]])
+            traj = np.concatenate((traj, np.tile(end_position, delta)))
 
         traj_horizon = traj[:self.N][:, np.newaxis]
 
