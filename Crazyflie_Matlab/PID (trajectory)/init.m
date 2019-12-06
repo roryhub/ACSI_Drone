@@ -15,3 +15,8 @@ PosI = 0;
 PosD = 0.24;
 
 max_ang_ref = 0.5;
+
+thrust_command = 47000;
+roll_command = 0;
+pitch_command = 0;
+yawrate_command = 0;

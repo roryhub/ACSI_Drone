@@ -110,9 +110,12 @@ if __name__ == '__main__':
             print('Crazyflies found:')
             for i in available:
                 print(i[0])
-                if(i[0]=='radio://0/80/2M'):
+                if(i[0]=='radio://0/70/2M'):
                     le = CrazyflieComm(i[0])
                     found = True
+                # if(i[0]=='radio://0/80/2M'):
+                #     le = CrazyflieComm(i[0])
+                #     found = True
         elif found == False :
             print('\rAttempt ' + str(tries) + ' failed, no correct Crazyflie found         ', end =" ")
         if found == True:

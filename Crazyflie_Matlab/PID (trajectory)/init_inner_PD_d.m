@@ -1,8 +1,8 @@
 PD_thrust_param.Kp = 10;
 PD_thrust_param.Kd = 5;
 PD_thrust_param.h = 0.002;      % s
-PD_thrust_param.g = 9.81;       % m/s^2
-PD_thrust_param.m = 0.027;      % kg
+PD_thrust_param.g = g;       % m/s^2
+PD_thrust_param.m = m;      % kg
 PD_thrust_param.numlim = 1e-8;
 
 % C0mputes the saturation bounds for the thrust PD controller
@@ -22,3 +22,5 @@ PD_angle_param.h = 0.002;      % [s]
 PD_angle_param.I = [1.660e-5; 1.660e-5; 2.930e-5]; % kg*m^2
 PD_angle_param.maxlim = 0.1;
 PD_angle_param.minlim = -0.1;
+
+feedforward_thrust = (m*g + .0966418)/9.66418e-6;

@@ -1,7 +1,7 @@
 %% Model parameters of the crazyflie 2.0
 % Parameters
 g = 9.81;       % m/s^2
-m = 0.03645;      % kg
+m = 0.03434;      % kg
 l = 0.046;      % m
 k = 2.2e-8;  % N m s^2
 b = 2e-9;       % N s^2
