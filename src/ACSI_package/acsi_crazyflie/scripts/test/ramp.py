@@ -94,8 +94,9 @@ class MotorRampExample:
         while thrust >= 20000:
             self._cf.commander.send_setpoint(roll, pitch, yawrate, thrust)
             time.sleep(0.1)
-            if thrust >= 25000:
+            if thrust >= 40000:
                 thrust_mult = -1
+
             thrust += thrust_step * thrust_mult
         self._cf.commander.send_setpoint(0, 0, 0, 0)
         # Make sure that the last packet leaves before the link is closed
