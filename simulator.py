@@ -18,8 +18,8 @@ class Simulator:
         self.ref_traj = None
 
 
-    def get_reference_trajectory(self, T, N):
-        self.t = np.linspace(1, T + N, T + N)
+    def get_reference_trajectory(self, n):
+        self.t = np.linspace(1, n, n)
         self.ref_traj = signal.square(self.t / 6)
 
     
@@ -67,9 +67,9 @@ def main():
 
     sim = Simulator(A, B, C, Q, R, RD, N)
 
-    T = N
+    traj_length = 150
 
-    sim.get_reference_trajectory(T, N)
+    sim.get_reference_trajectory(traj_length)
 
     state_history = sim.simulate()
 
