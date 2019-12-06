@@ -9,7 +9,12 @@ class MPC:
     def __init__(self, A, B, C, Q, R, RD, N):
         solvers.options['show_progress'] = False
 
-        self.N = N
+        self.N = N # horizon length
+
+        self.precompute(A, B, C, Q, R, RD)
+
+    
+    def precompute(self, A, B, C, Q, R, RD):
 
         Qbar, Rbar, RbarD = self.build_bars(Q, R, RD, self.N)
 
@@ -17,11 +22,13 @@ class MPC:
 
         Su = self.build_Su(A, B, C, self.N)
 
-        self.G = self.build_G(self.N)
-        
-        self.P = self.build_P(Rbar, RbarD, Qbar, Su)
+        L = self.build_L(self.N)
 
-        self.Fu, self.Fr, self.Fx = self.build_Fs(Rbar, Qbar, Su, Sx)
+        self.G = self.build_G(L, self.N)
+        
+        self.P = self.build_P(Rbar, RbarD, Qbar, Su, L)
+
+        self.Fu, self.Fr, self.Fx = self.build_Fs(Rbar, Qbar, Su, Sx, L)
         
         self.W0 = self.build_W0(self.N)
 
@@ -61,9 +68,15 @@ class MPC:
         return Su
 
     
-    def build_G(self, N):
-        upper_control_limit = np.tril(np.ones(N))
-        lower_control_limit = np.tril(-np.ones(N))
+    def build_L(self, N):
+        L = np.tril(np.ones(N))
+
+        return L
+
+    
+    def build_G(self, L, N):
+        upper_control_limit = L
+        lower_control_limit = np.negative(L)
         G = np.row_stack((upper_control_limit, lower_control_limit))
 
         return G
@@ -81,19 +94,16 @@ class MPC:
         return S
 
 
-    def build_P(self, Rbar, RbarD, Qbar, Su):
-        # TODO: include L for multiple input systems
-        # P = 2 * (Su.T @ Qbar @ Su + L.T @ Rbar @ L + RbarD)
-        P = 2 * (Su.T @ Qbar @ Su + Rbar + RbarD)
+    def build_P(self, Rbar, RbarD, Qbar, Su, L):
+        P = 2 * (Su.T @ Qbar @ Su + L.T @ Rbar @ L + RbarD)
 
         return P
 
     
-    def build_Fs(self, Rbar, Qbar, Su, Sx):
-        # TODO: include L for multiple input systems
-        Fu = 2 * (Su[:,0].T @ Qbar @ Su + np.diag(Rbar).T)[:, np.newaxis]
-        Fr = -2 * (Qbar @ Su).T
-        Fx = 2 * (Sx.T @ Qbar @ Su).T
+    def build_Fs(self, Rbar, Qbar, Su, Sx, L):
+        Fu = 2 * (Su.T @ Qbar.T @ Su[:,0] + np.diag(L.T @ Rbar.T))[:, np.newaxis]
+        Fr = -2 * (Su.T @ Qbar.T)
+        Fx = 2 * (Su.T @ Qbar.T @ Sx)
 
         return Fu, Fr, Fx
 
