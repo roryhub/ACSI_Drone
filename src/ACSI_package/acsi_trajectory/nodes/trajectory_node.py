@@ -50,8 +50,7 @@ if __name__ == '__main__':
 
 
     while not rospy.is_shutdown():
-
-
+        
         frequency =  100 #TODO: need 
         total_time = 1 #TODO: needs to be updated to fit goal time to reasonable speed (maybe function based on euclidian distance and goal max speed?)
 
