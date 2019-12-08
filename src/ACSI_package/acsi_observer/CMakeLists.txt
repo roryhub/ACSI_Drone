@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(acsi_controller)
+project(acsi_observer)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -16,8 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_message_files(
   FILES
-  Attitude_Setpoint.msg
-  Attitude_Error.msg
+  Drone_States.msg
 )
 
 catkin_python_setup()
@@ -50,6 +49,6 @@ include_directories(
 # catkin_add_nosetests(test)
 
 install(PROGRAMS
-  nodes/position_control_node
+  nodes/observer_node
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
