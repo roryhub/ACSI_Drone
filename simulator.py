@@ -24,7 +24,7 @@ class Simulator:
         self.t = np.linspace(1, n, n)
 
         if model_type == 0:
-            self.ref_traj = signal.square(self.t / 6)
+            self.ref_traj = signal.square(self.t / 6)[np.newaxis, :]
         
         else:
             first = signal.square(self.t / 6)
@@ -39,14 +39,14 @@ class Simulator:
 
         U, X = self.establish_starting_state()
 
-        for i in range(len(self.ref_traj)):
+        for i in range(self.ref_traj.shape[1]):
 
             if i == 0:
                 state_history = X
             else:
                 state_history = np.column_stack((state_history, X))
             
-            remaining_traj = self.ref_traj[i:]
+            remaining_traj = self.ref_traj[:, i:]
 
             U = self.mpc.get_control_input(X, U, remaining_traj)
 
@@ -71,7 +71,7 @@ class Simulator:
 
     def plot(self):
         fig, ax = plt.subplots()
-        ax.plot(self.t, self.ref_traj)
+        ax.plot(self.t, self.ref_traj[0, :])
         ax.plot(self.t, self.state_history[0,:])
 
         plt.show()
@@ -106,12 +106,12 @@ def main(model_type=0):
         B = matfile['B']
         C = matfile['C']
 
-        nout = C.shape[1]
+        nout = C.shape[0]
         nin = B.shape[1]
 
-        Q = np.array([1.0] * nout)
-        R = np.array([0.1] * nin)
-        RD = np.array([1.0] * nin)
+        Q = np.diag(np.array([1.0] * nout))
+        R = np.diag(np.array([0.1] * nin))
+        RD = np.diag(np.array([1.0] * nin))
 
         umin = np.tile(np.array([-1.0]),(nin, 1))
         umax = np.tile(np.array([1.0]),(nin, 1))
@@ -131,5 +131,5 @@ def main(model_type=0):
 
 if __name__ == '__main__':
 
-    mtype = 0
+    mtype = 1
     main(mtype)

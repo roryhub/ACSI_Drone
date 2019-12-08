@@ -51,9 +51,9 @@ class MPC:
     
 
     def build_bars(self, Q, R, RD, N):
-        Qbar = np.kron(np.eye(self.num_outputs * N), Q) # weight penalty for states
-        Rbar = np.kron(np.eye(self.num_outputs * N), R) # weight penalty for control effort
-        RbarD = np.kron(np.eye(self.num_outputs * N), RD) # weight penalty for change in control effort
+        Qbar = np.kron(np.eye(N), Q) # weight penalty for states
+        Rbar = np.kron(np.eye(N), R) # weight penalty for control effort
+        RbarD = np.kron(np.eye(N), RD) # weight penalty for change in control effort
 
         assert Qbar.shape == (self.num_outputs * N, self.num_outputs * N)
         assert Rbar.shape == (self.num_inputs * N, self.num_inputs * N)
@@ -70,9 +70,7 @@ class MPC:
                 :
               C * A^N ]
         '''
-        '''
-            This commented code is a more intuitive but slower way to build Sx
-        '''
+        # This commented code is a more intuitive but slower way to build Sx
         # Sx1 = C @ A
         # for i in range(2, N+1):
         #     next_element = C @ np.linalg.matrix_power(A, i)
@@ -100,9 +98,7 @@ class MPC:
 
         assert Su1.shape == (self.num_outputs * N, self.num_inputs)
         
-        '''
-            This commented code is a more intuitive but slower way to build Su2
-        '''
+        # This commented code is a more intuitive but slower way to build Su2
         # zero_array = np.zeros((self.num_outputs, self.num_inputs))
         # Su2 = np.concatenate((zero_array, Su1[:-4,:]))
         # for i in range(2, N):
@@ -143,7 +139,6 @@ class MPC:
 
     
     def build_W0(self, N, umin, umax):
-        # self.W01 = np.ones(2 * self.num_inputs * N)[:, np.newaxis]
         umin_arr = np.tile(np.negative(umin), (N, 1))
         umax_arr = np.tile(umax, (N, 1))
 
@@ -186,21 +181,17 @@ class MPC:
     def calculate_q(self, X, U, traj_horizon):
         q = self.Fx @ X + self.Fu @ U + self.Fr @ traj_horizon
 
-        assert q.shape == (self.num_inputs * self.N, self.num_inputs)
+        assert q.shape == (self.num_inputs * self.N, 1)
 
         return q
 
 
     def calculate_W(self, U):
-        # ones_array = np.tile(np.ones(self.N)[:, np.newaxis], (1, self.num_inputs))
-        # low_limit = ones_array @ np.negative(U)
-        # high_limit = ones_array @ U
-        # W1 = self.W01 + np.concatenate((low_limit, high_limit))
         U_pos = np.tile(U, (self.N, 1))
         U_neg = np.tile(np.negative(U), (self.N, 1))
-        # lastU = np.tile(U, (self.N * 2, 1))
-        lastU = np.row_stack((U_pos, U_neg))
-        W = self.W0 - lastU
+        lastU = np.row_stack((U_neg, U_pos))
+
+        W = self.W0 + lastU
 
         assert W.shape == (2 * self.num_inputs * self.N, 1)
 
@@ -241,6 +232,10 @@ class MPC:
         # dimension fill if trajectory is 1D
         if traj.ndim < 2:
             traj = traj[np.newaxis, :]
+        
+        # ensure the trajectories for each input lie on a row
+        if traj.shape[1] == self.num_inputs:
+            traj = traj.T
 
         return U, traj
 
@@ -251,9 +246,9 @@ class MPC:
         if delta > 0:
             end_position = traj[:, -1][:, np.newaxis]
             traj = np.column_stack((traj, np.tile(end_position, (1, delta))))
-        
-        traj = self.stack_trajectories(traj)
-        traj_horizon = traj[:self.num_inputs * self.N]
+
+        traj_horizon = traj[:, :self.N]
+        traj_horizon = self.stack_trajectories(traj_horizon)
 
         return traj_horizon
     
