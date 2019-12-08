@@ -218,6 +218,7 @@ class MPC:
         sol = solvers.qp(matrix(self.P), matrix(q), matrix(self.G), matrix(h))
 
         future_control = np.array(sol['x'])
+
         U += future_control[:self.num_outputs]
 
         return U

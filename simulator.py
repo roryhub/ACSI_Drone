@@ -77,8 +77,18 @@ class Simulator:
 
 
     def plot(self):
+        self.t = self.t * .04
         if self.mtype == 0:
             fig, ax = plt.subplots()
+            fig.patch.set_facecolor('xkcd:black')
+
+            ax.set_facecolor('xkcd:black')
+            ax.tick_params(color='xkcd:white', labelcolor='xkcd:white')
+            ax.spines['bottom'].set_color('xkcd:white')
+            ax.spines['top'].set_color('xkcd:white')
+            ax.spines['right'].set_color('xkcd:white')
+            ax.spines['left'].set_color('xkcd:white')
+
             ax.plot(self.t, self.ref_traj[0, :])
             ax.plot(self.t, self.X_hist[0, :])
 
@@ -130,8 +140,9 @@ class Simulator:
                 axY[i].spines['left'].set_color('xkcd:white')
                 axU[i].spines['left'].set_color('xkcd:white')
 
-        figY.tight_layout()
-        figU.tight_layout()
+            figY.tight_layout()
+            figU.tight_layout()
+
         plt.show()
 
 
