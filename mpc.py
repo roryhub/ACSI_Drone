@@ -135,7 +135,7 @@ class MPC:
 
     
     def build_G(self, L, N):
-        G = np.row_stack((L, L))
+        G = np.row_stack((L, np.negative(L)))
 
         assert G.shape == (2 * self.num_inputs * N, self.num_inputs * N)
 
@@ -146,6 +146,7 @@ class MPC:
         # self.W01 = np.ones(2 * self.num_inputs * N)[:, np.newaxis]
         umin_arr = np.tile(np.negative(umin), (N, 1))
         umax_arr = np.tile(umax, (N, 1))
+
         W0 = np.row_stack((umax_arr, umin_arr))
 
         assert W0.shape == (2 * self.num_inputs * N, 1)
@@ -195,9 +196,10 @@ class MPC:
         # low_limit = ones_array @ np.negative(U)
         # high_limit = ones_array @ U
         # W1 = self.W01 + np.concatenate((low_limit, high_limit))
-        # U_pos = np.tile(U, (self.N, 1))
-        # U_neg = np.tile(np.negative(U), (self.N, 1))
-        lastU = np.tile(U, (self.N * 2, 1))
+        U_pos = np.tile(U, (self.N, 1))
+        U_neg = np.tile(np.negative(U), (self.N, 1))
+        # lastU = np.tile(U, (self.N * 2, 1))
+        lastU = np.row_stack((U_pos, U_neg))
         W = self.W0 - lastU
 
         assert W.shape == (2 * self.num_inputs * self.N, 1)
