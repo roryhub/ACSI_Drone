@@ -197,5 +197,5 @@ def main(model_type=0):
 
 if __name__ == '__main__':
 
-    mtype = 1p
+    mtype = 1
     main(mtype)
