@@ -34,8 +34,8 @@ class Simulator:
         else:
             rx = 3 * np.ones(len(self.t))
             ry = np.ones(len(self.t))
-            rz = signal.square(self.t / 16)
-            ryaw = 2 * signal.square(self.t / 16)
+            rz = signal.square(self.t / 6)
+            ryaw = 2 * signal.square(self.t / 6)
 
             self.ref_traj = np.row_stack((rx, ry, rz, ryaw))
 
@@ -61,7 +61,7 @@ class Simulator:
             U = self.mpc.get_control_input(X, U, remaining_traj)
 
             X = self.update_states(X, U)
-    
+
 
     def establish_starting_state(self):
         U = np.zeros((self.B.shape[1], 1))
@@ -175,7 +175,7 @@ def main(model_type=0):
         B = matfile['B']
         C = matfile['C']
 
-        Q = np.diag(np.array([1000., 1000., 1000., 1000.]))
+        Q = np.diag(np.array([1000., 10000., 1000., 1000.]))
         R = np.diag(np.array([1., 1., 1., 1e-8]))
         RD = np.diag(np.array([.01, .01, .1, 1e-8]))
 
@@ -186,7 +186,7 @@ def main(model_type=0):
 
     sim = Simulator(A, B, C, Q, R, RD, umin, umax, N)
 
-    traj_length = 4*N
+    traj_length = 4 * N
 
     sim.get_reference_trajectory(traj_length, model_type=model_type)
 
@@ -197,5 +197,5 @@ def main(model_type=0):
 
 if __name__ == '__main__':
 
-    mtype = 1
+    mtype = 1p
     main(mtype)

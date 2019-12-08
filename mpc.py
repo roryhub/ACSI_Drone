@@ -43,7 +43,7 @@ class MPC:
         
         self.P = self.build_P(Rbar, RbarD, Qbar, Su, L)
 
-        self.Fu, self.Fr, self.Fx = self.build_Fs(Rbar, Qbar, Su, Sx, L)
+        self.Fu1, self.Fu2, self.Fr, self.Fx = self.build_Fs(Rbar, Qbar, Su, Sx, L)
         
         self.W0 = self.build_W0(self.N, umin, umax)
 
@@ -166,20 +166,24 @@ class MPC:
 
     
     def build_Fs(self, Rbar, Qbar, Su, Sx, L):
-        Fu = 2 * (Su.T @ Qbar.T @ Su[:, :self.num_inputs]
-                + np.tile(np.diag(L.T @ Rbar.T)[:, np.newaxis], (1, self.num_inputs)))
+        Fu1 = 2 * (Rbar.T @ L.T)
+        Fu2 = 2 * (Su[:, :self.num_inputs].T @ Qbar @ Su).T
         Fr = -2 * (Su.T @ Qbar.T)
         Fx = 2 * (Su.T @ Qbar.T @ Sx)
 
-        assert Fu.shape == (self.num_inputs * self.N, self.num_inputs)
+        assert Fu1.shape == (self.num_inputs * self.N, self.num_inputs * self.N)
+        assert Fu2.shape == (self.num_inputs * self.N, self.num_inputs)
         assert Fr.shape == (self.num_inputs * self.N, self.num_outputs * self.N)
         assert Fx.shape == (self.num_inputs * self.N, self.num_states)
 
-        return Fu, Fr, Fx
+        return Fu1, Fu2, Fr, Fx
 
 
     def calculate_q(self, X, U, traj_horizon):
-        q = self.Fx @ X + self.Fu @ U + self.Fr @ traj_horizon
+        q = self.Fx @ X \
+            + self.Fu2 @ U \
+            + self.Fu1 @ np.tile(U, (self.N, 1)) \
+            + self.Fr @ traj_horizon
 
         assert q.shape == (self.num_inputs * self.N, 1)
 
