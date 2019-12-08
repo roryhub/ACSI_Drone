@@ -17,6 +17,7 @@ from std_msgs.msg import String
 import numpy as np
 import tf
 from math import sin, cos, pi
+from acsi_mpc import mpc as MPC
 
 recieved_trajectory = False
 recieved_optitrack = False

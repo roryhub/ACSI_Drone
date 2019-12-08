@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>acsi_controller</name>
+  <name>acsi_observer</name>
   <version>0.0.0</version>
-  <description>The acsi_controller package</description>
+  <description>The acsi_observer package</description>
 
   <maintainer email="cerlabcontrol@todo.todo">cerlabcontrol</maintainer>
 
