@@ -25,10 +25,10 @@ class Simulator:
         self.mpc = MPC(A, B, C, Q, R, RD, umin, umax, N)
 
 
-    def get_reference_trajectory(self, n, model_type=0):
+    def get_reference_trajectory(self, n):
         self.t = np.linspace(1, n, n)
 
-        if model_type == 0:
+        if self.mtype == 0:
             self.ref_traj = signal.square(self.t / 6)[np.newaxis, :]
         
         else:
@@ -188,7 +188,7 @@ def main(model_type=0):
 
     traj_length = 4 * N
 
-    sim.get_reference_trajectory(traj_length, model_type=model_type)
+    sim.get_reference_trajectory(traj_length)
 
     sim.simulate()
 
