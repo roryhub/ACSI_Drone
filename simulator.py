@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 from scipy import signal
 from scipy.io import loadmat
 import os
@@ -13,11 +12,17 @@ class Simulator:
     def __init__(self, A, B, C, Q, R, RD, umin, umax, N):
         self.A = A
         self.B = B
+        self.C = C
+        self.num_outputs = C.shape[0]
+        self.num_inputs = B.shape[1]
+
+        if self.num_inputs == self.num_outputs == 1:
+            self.mtype = 0
+        
+        else:
+            self.mtype = 1
 
         self.mpc = MPC(A, B, C, Q, R, RD, umin, umax, N)
-
-        self.t = None
-        self.ref_traj = None
 
 
     def get_reference_trajectory(self, n, model_type=0):
@@ -27,12 +32,12 @@ class Simulator:
             self.ref_traj = signal.square(self.t / 6)[np.newaxis, :]
         
         else:
-            first = signal.square(self.t / 6)
-            second = np.zeros((len(first)))
-            third = np.zeros((len(first)))
-            fourth = np.zeros((len(first)))
+            rx = 3 * np.ones(len(self.t))
+            ry = np.ones(len(self.t))
+            rz = signal.square(self.t / 16)
+            ryaw = 2 * signal.square(self.t / 16)
 
-            self.ref_traj = np.row_stack((first, second, third, fourth))
+            self.ref_traj = np.row_stack((rx, ry, rz, ryaw))
 
     
     def simulate(self):
@@ -42,18 +47,20 @@ class Simulator:
         for i in range(self.ref_traj.shape[1]):
 
             if i == 0:
-                state_history = X
+                self.X_hist = X
+                self.U_hist = U
+                self.Y_hist = self.C @ X
+
             else:
-                state_history = np.column_stack((state_history, X))
+                self.X_hist = np.column_stack((self.X_hist, X))
+                self.U_hist = np.column_stack((self.U_hist, U))
+                self.Y_hist = np.column_stack((self.Y_hist, self.C @ X))
             
             remaining_traj = self.ref_traj[:, i:]
 
             U = self.mpc.get_control_input(X, U, remaining_traj)
 
             X = self.update_states(X, U)
-
-
-        self.state_history = state_history
     
 
     def establish_starting_state(self):
@@ -70,10 +77,61 @@ class Simulator:
 
 
     def plot(self):
-        fig, ax = plt.subplots()
-        ax.plot(self.t, self.ref_traj[0, :])
-        ax.plot(self.t, self.state_history[0,:])
+        if self.mtype == 0:
+            fig, ax = plt.subplots()
+            ax.plot(self.t, self.ref_traj[0, :])
+            ax.plot(self.t, self.X_hist[0, :])
 
+        else:
+            figY, axY = plt.subplots(nrows=self.num_outputs)
+            figU, axU = plt.subplots(nrows=self.num_outputs)
+            figY.suptitle('Reference Tracking', color='xkcd:white', y=1.0)
+            figU.suptitle('Control Usage', color='xkcd:white', y=1.0)
+            figY.patch.set_facecolor('xkcd:black')
+            figU.patch.set_facecolor('xkcd:black')
+
+            Y_labels = [
+                'X Position',
+                'Y Position',
+                'Z Position',
+                'Yaw Position'
+            ]
+
+            U_labels = [
+                'Roll',
+                'Pitch',
+                'Yaw',
+                'Thrust'
+            ]
+
+            for i in range(self.num_outputs):   
+                axY[i].plot(self.t, self.ref_traj[i, :])
+                axY[i].plot(self.t, self.Y_hist[i, :])
+                axY[i].set_title(Y_labels[i], color='xkcd:white')
+
+                axU[i].plot(self.t, self.U_hist[i, :])
+                axU[i].set_title(U_labels[i], color='xkcd:white')
+
+                axY[i].set_facecolor('xkcd:black')
+                axU[i].set_facecolor('xkcd:black')
+
+                axY[i].tick_params(color='xkcd:white', labelcolor='xkcd:white')
+                axU[i].tick_params(color='xkcd:white', labelcolor='xkcd:white')
+
+                axY[i].spines['bottom'].set_color('xkcd:white')
+                axU[i].spines['bottom'].set_color('xkcd:white')
+
+                axY[i].spines['top'].set_color('xkcd:white')
+                axU[i].spines['top'].set_color('xkcd:white')
+
+                axY[i].spines['right'].set_color('xkcd:white')
+                axU[i].spines['right'].set_color('xkcd:white')
+
+                axY[i].spines['left'].set_color('xkcd:white')
+                axU[i].spines['left'].set_color('xkcd:white')
+
+        figY.tight_layout()
+        figU.tight_layout()
         plt.show()
 
 
@@ -106,21 +164,18 @@ def main(model_type=0):
         B = matfile['B']
         C = matfile['C']
 
-        nout = C.shape[0]
-        nin = B.shape[1]
+        Q = np.diag(np.array([1000., 1000., 1000., 1000.]))
+        R = np.diag(np.array([1., 1., 1., 1e-8]))
+        RD = np.diag(np.array([.01, .01, .1, 1e-8]))
 
-        Q = np.diag(np.array([1.0] * nout))
-        R = np.diag(np.array([0.1] * nin))
-        RD = np.diag(np.array([1.0] * nin))
+        umin = np.array([-20., -20., -20., -47000.])[:, np.newaxis]
+        umax = np.array([20., 20., 20., 18000.])[:, np.newaxis]
 
-        umin = np.tile(np.array([-1.0]),(nin, 1))
-        umax = np.tile(np.array([1.0]),(nin, 1))
-
-    N = 100
+    N = 30
 
     sim = Simulator(A, B, C, Q, R, RD, umin, umax, N)
 
-    traj_length = 2*N
+    traj_length = 4*N
 
     sim.get_reference_trajectory(traj_length, model_type=model_type)
 

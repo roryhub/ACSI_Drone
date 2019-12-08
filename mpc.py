@@ -187,8 +187,8 @@ class MPC:
 
 
     def calculate_W(self, U):
-        U_pos = np.tile(U, (self.N, 1))
         U_neg = np.tile(np.negative(U), (self.N, 1))
+        U_pos = np.tile(U, (self.N, 1))
         lastU = np.row_stack((U_neg, U_pos))
 
         W = self.W0 + lastU
@@ -218,8 +218,7 @@ class MPC:
         sol = solvers.qp(matrix(self.P), matrix(q), matrix(self.G), matrix(h))
 
         future_control = np.array(sol['x'])
-
-        U += future_control[0][:, np.newaxis]
+        U += future_control[:self.num_outputs]
 
         return U
 
