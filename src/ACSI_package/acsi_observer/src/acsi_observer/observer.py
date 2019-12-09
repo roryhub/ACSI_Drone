@@ -27,9 +27,8 @@ class Observer:
         return
     
     def handle_opti(self,opti_msg):
-        opti_msg = Pose()
-        current_states = Drone_States()
-        self.current_states.time = rospy.Time.now()
+
+        self.current_states.time = rospy.Time.now().nsecs*1e-9+rospy.Time.now().secs
         self.current_states.x = opti_msg.position.x
         self.current_states.y = opti_msg.position.y
         self.current_states.z = opti_msg.position.z
@@ -39,19 +38,19 @@ class Observer:
         self.current_states.yaw = current_euler[2]
         if len(self.state_history) > 10:
             self.update_vel()
-            self.state_history.insert(0, deepcopy(current_states))
+            self.state_history.insert(0, deepcopy(self.current_states))
             self.state_history.pop()
         elif len(self.state_history) < 5:
-            self.state_history.insert(0, deepcopy(current_states))
+            self.state_history.insert(0, deepcopy(self.current_states))
         else:
             self.update_vel()
-            self.state_history.insert(0, deepcopy(current_states))
+            self.state_history.insert(0, deepcopy(self.current_states))
 
         return
 
     def update_vel(self):
 
-        Ts = (self.state_history[0].time.nsecs-self.state_history[4].time.nsecs)/(4*1e-9) #making sample time the average in the last five samples converted to seconds
+        Ts = (self.state_history[0].time-self.state_history[4].time)/(4) #making sample time the average in the last five samples converted to seconds
 
         try:
             self.current_states.dx = -(-self.state_history[0].x + 8.0*self.state_history[1].x - 8.0*self.state_history[3].x + self.state_history[4].x)/(12.0*Ts)
