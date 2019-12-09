@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Drone_States.msg
+  Drone_States_Array.msg
 )
 
 catkin_python_setup()
