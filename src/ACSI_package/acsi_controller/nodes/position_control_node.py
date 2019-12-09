@@ -36,6 +36,22 @@ if __name__ == '__main__':
     rospy.init_node('position_controller_node')
     gains = Drone_Pid_Settings() #bring down from the param server?
 
+    gains.pitch.p  = 
+    gains.pitch.i  = 0
+    gains.pitch.d  = 
+
+    gains.roll.p   = 
+    gains.roll.i   = 0
+    gains.roll.d   = 
+
+    gains.yaw.p    = 
+    gains.yaw.i    = 0
+    gains.yaw.d    = 
+
+    gains.thrust.p = 
+    gains.thrust.i = 0
+    gains.thrust.d = 
+
     status_pub = rospy.Publisher('pid_controller/status',String,queue_size=2)
     pid_controller = PID.PID(gains)
 
