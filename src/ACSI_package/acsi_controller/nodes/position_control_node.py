@@ -36,21 +36,21 @@ if __name__ == '__main__':
     rospy.init_node('position_controller_node')
     gains = Drone_Pid_Settings() #bring down from the param server?
 
-    gains.pitch.p  = 
+    gains.pitch.p  = .2*180/pi
     gains.pitch.i  = 0
-    gains.pitch.d  = 
+    gains.pitch.d  = .24*180/pi
 
-    gains.roll.p   = 
+    gains.roll.p   = .2*180/pi
     gains.roll.i   = 0
-    gains.roll.d   = 
+    gains.roll.d   = .24*180/pi
 
-    gains.yaw.p    = 
+    gains.yaw.p    = 0
     gains.yaw.i    = 0
-    gains.yaw.d    = 
+    gains.yaw.d    = 0
 
-    gains.thrust.p = 
+    gains.thrust.p = 25000/2.0
     gains.thrust.i = 0
-    gains.thrust.d = 
+    gains.thrust.d = 25000*1.5
 
     status_pub = rospy.Publisher('pid_controller/status',String,queue_size=2)
     pid_controller = PID.PID(gains)
@@ -58,12 +58,6 @@ if __name__ == '__main__':
     setpoint_pub = rospy.Publisher('controller/ypr',Attitude_Setpoint,queue_size=2)
     rospy.Subscriber('/state_observer_node/current_states',Drone_States,observer_callback,callback_args=pid_controller)
     rospy.Subscriber('/trajectory/drone_trajectory',PoseArray,trajectory_callback)
-
-    test_setpoint = Attitude_Setpoint()
-    test_setpoint.pitch = 0
-    test_setpoint.roll = 0
-    test_setpoint.yaw_rate = 0
-    test_setpoint.thrust = 33000
 
     r = rospy.Rate(100)
     start_time = rospy.Time.now()
