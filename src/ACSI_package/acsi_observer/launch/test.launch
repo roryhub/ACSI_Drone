@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!--CSV-->
+
+	<node pkg="acsi_observer" type="observer_node.py"  name ="observer_node" output="screen" />
+
+	<include file="$(find acsi_vrpn_client)/launch/Wean_Motive.launch" />
+
+</launch>
