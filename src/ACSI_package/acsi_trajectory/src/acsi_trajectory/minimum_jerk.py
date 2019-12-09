@@ -149,8 +149,7 @@ def minimum_jerk(coord_start, coord_end, frequency, move_time):
             - same format as coord_start
 
         frequency: Need to further investigate how to tune this parameter.
-            It basically decides how many waypoints are calculated to compose the trajectory.
-            Maybe its dependent on the loop time of your control system?
+            The loop frequency of your system
 
         move_time: time you want to take to reach destination
 
