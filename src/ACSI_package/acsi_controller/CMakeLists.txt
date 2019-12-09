@@ -18,6 +18,8 @@ add_message_files(
   FILES
   Attitude_Setpoint.msg
   Attitude_Error.msg
+  Pid_Gains.msg
+  Drone_Pid_Settings.msg
 )
 
 catkin_python_setup()

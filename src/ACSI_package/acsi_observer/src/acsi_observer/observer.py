@@ -23,7 +23,7 @@ class Observer:
     state_history = []
     last_update =  0
     def __init__(self):
-        self.last_update = rospy.Time.now
+        self.last_update = rospy.Time.now()
         return
     
     def handle_opti(self,opti_msg):
@@ -51,7 +51,7 @@ class Observer:
 
     def update_vel(self):
 
-        Ts = (self.state_history[0].time+self.state_history[1].time+self.state_history[2].time+self.state_history[3].time+self.state_history[4].time)/5 #making sample time the average in the last five samples
+        Ts = (self.state_history[0].time.nsecs-self.state_history[4].time.nsecs)/(4*1e-9) #making sample time the average in the last five samples converted to seconds
 
         try:
             self.current_states.dx = -(-self.state_history[0].x + 8.0*self.state_history[1].x - 8.0*self.state_history[3].x + self.state_history[4].x)/(12.0*Ts)
