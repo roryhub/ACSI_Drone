@@ -63,6 +63,9 @@ def minimum_jerk(start_states, end_states, frequency, move_time):
 
     return states_array
 
+
+'''
+test main function currently commented out
 if __name__ == '__main__':
     start = Drone_States()
     end   = Drone_States()
@@ -83,4 +86,4 @@ if __name__ == '__main__':
 
     traj = minimum_jerk(start, end, 1, 10)
     print(traj)
-   
+'''
