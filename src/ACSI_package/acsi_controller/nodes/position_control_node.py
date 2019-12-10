@@ -30,12 +30,7 @@ def observer_callback(observer_states,controller):
     controller.recieved_state = True
     controller.current_global_state = observer_states
 
-    
-if __name__ == '__main__':
-
-    rospy.init_node('position_controller_node')
-    gains = Drone_Pid_Settings() #bring down from the param server?
-
+def set_gains(gains):
     gains.pitch.p  = .2*180/pi
     gains.pitch.i  = 0
     gains.pitch.d  = .24*180/pi
@@ -51,6 +46,14 @@ if __name__ == '__main__':
     gains.thrust.p = 25000/2.0
     gains.thrust.i = 0
     gains.thrust.d = 25000*1.5
+
+if __name__ == '__main__':
+
+    rospy.init_node('position_controller_node')
+
+    gains = Drone_Pid_Settings() #bring down from the param server eventually?
+    set_gains(gains)
+   
 
     status_pub = rospy.Publisher('pid_controller/status',String,queue_size=2)
     pid_controller = PID.PID(gains)
