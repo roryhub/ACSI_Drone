@@ -55,6 +55,22 @@ if __name__ == '__main__':
     set_gains(gains)
    
 
+    gains.pitch.p  = .2*180/pi
+    gains.pitch.i  = 0
+    gains.pitch.d  = .24*180/pi
+
+    gains.roll.p   = .2*180/pi
+    gains.roll.i   = 0
+    gains.roll.d   = .24*180/pi
+
+    gains.yaw.p    = 0
+    gains.yaw.i    = 0
+    gains.yaw.d    = 0
+
+    gains.thrust.p = 25000/2.0
+    gains.thrust.i = 0
+    gains.thrust.d = 25000*1.5
+
     status_pub = rospy.Publisher('pid_controller/status',String,queue_size=2)
     pid_controller = PID.PID(gains)
 
