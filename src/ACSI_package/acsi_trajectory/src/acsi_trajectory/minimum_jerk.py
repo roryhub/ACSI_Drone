@@ -3,205 +3,62 @@ import numpy as np #Version 1.17.4
 import rospy
 from geometry_msgs.msg import Pose, PoseArray
 from copy import deepcopy
+from acsi_observer.msg import Drone_States, Drone_States_Array
 
+'''
+Need to clean up and change some stuff in here for future use
+TODO: modify to use matrix solving and take arbitrary initial and final states
+'''
 
-def get_waypoint(current, setpoint, time, time_freq):
+def generate_coefficients(initial, final, move_time):
+
+    tf = move_time
+    jerk_matrix = np.matrix([[1, 0, 0, 0, 0, 0],[0, 1, 0, 0, 0, 0],[0, 0, 2, 0, 0, 0],[1,tf,tf**2,tf**3,tf**4,tf**5],[0, 1, 2*tf, 3*tf**2, 4*tf**3, 5*tf**4],[0, 0, 2, 6*tf, 12*tf**2, 20*tf**3]])
+    conditions  = np.stack((initial, final), axis=0)
+
+    return np.inv(jerk_matrix) @ conditions
+
+def generate_states(coefficients, t):
+    state_matrix = np.matrix([[1, t, t**2, t**3, t**4, t**5], [0, 1, 2*t, 3*t**2, 4*t**3, 5*t**4], [0, 0, 2, 6*t, 12*t**2, 20*t**3]])
+    return coefficients @ state_matrix
+
+def minimum_jerk(start_states, end_states, frequency, move_time):
     '''
-    calculates a single waypoint for a minimum jerk trajectory
+    start states and end states take form 
     '''
-    delta = setpoint - current
-    r = time / time_freq # this variable starts close to 0 and goes to 1 over the course of the trajectory
-    equation = 10 * r**3 - 15 * r**4 + 6 * r**5
-    waypoint = current + delta * equation
-    return waypoint
-
-
-def get_velocity(current, setpoint, time, time_freq, move_time):
-    delta = setpoint - current
-    r = time / time_freq
-    equation = 30 * r**2 - 60 * r**3 + 30 * r**4
-    velocity = delta / move_time * equation
-    return velocity
-
-
-def get_acceleration(current, setpoint, time, time_freq, move_time):
-    delta = setpoint - current
-    r = time / time_freq
-    equation = 60 * r - 180 * r**2 + 120 * r**3
-    acceleration = delta / move_time**2 * equation
-    return acceleration
-
-
-def get_jerk(current, setpoint, time, time_freq, move_time):
-    delta = setpoint - current
-    r = time / time_freq
-    equation = 60 - 360 * r + 360 * r**2
-    jerk = delta / move_time**3 * equation
-    return jerk
-
-
-def minimum_jerk_extra(coord_start, coord_end, frequency, move_time, plotting=False):
-    trajectory = np.array([])
-    time_freq = int(move_time * frequency)
-
-    if plotting:
-        velocity = np.array([])
-        acceleration = np.array([])
-        jerk = np.array([])
-
-    try:
-        _ = iter(coord_start)
-    except TypeError:
-        coord_start = [coord_start]
-        coord_end = [coord_end]
-
-    dimension = len(coord_start)
+    state_waypoint = Drone_States()
+    states_array = Drone_States_Array()
+    N = int(move_time * frequency) # number of waypoints to compose the trajectory
     
-    for d in range(dimension):
+    x_start = np.matrix([[start_states.x],[start_states.dx],[0]])
+    x_end   = np.matrix([[end_states.x],[end_states.dx],[0]])
 
-        for t in range(1, time_freq):
-            waypoint = get_waypoint(coord_start[d], coord_end[d], t, time_freq)
-            trajectory = np.append(trajectory, waypoint)
+    y_start = np.matrix([[start_states.y],[start_states.dy],[0]])
+    y_end   = np.matrix([[end_states.y],[end_states.dy],[0]])
 
-            if plotting:
-                v = get_velocity(coord_start[d], coord_end[d], t, time_freq, move_time)
-                velocity = np.append(velocity, v)
-                a = get_acceleration(coord_start[d], coord_end[d], t, time_freq, move_time)
-                acceleration = np.append(acceleration, a)
-                j = get_jerk(coord_start[d], coord_end[d], t, time_freq, move_time)
-                jerk = np.append(jerk, j)
-        
-        if d == 0:
-            all_trajectories = trajectory
+    z_start = np.matrix([[start_states.z],[start_states.dz],[0]])
+    z_end   = np.matrix([[end_states.z],[end_states.dz],[0]])
 
-            if plotting:
-                all_velocities = velocity
-                all_accelerations = acceleration
-                all_jerks = jerk
+    coefficients_x = generate_coefficients(x_start, x_end, move_time)
+    coefficients_y = generate_coefficients(y_start, y_end, move_time)
+    coefficients_z = generate_coefficients(z_start, z_end, move_time)
 
-        else:
-            all_trajectories = np.column_stack((all_trajectories, trajectory))
+    for i in range(1, N): # loop creates a trajectory all dimensions at once
+        x_states = generate_states(coefficients_x, i/frequency)
+        y_states = generate_states(coefficients_y, i/frequency)
+        z_states = generate_states(coefficients_z, i/frequency)
 
-            if plotting:
-                all_velocities = np.column_stack((all_velocities, velocity))
-                all_accelerations = np.column_stack((all_accelerations, acceleration))
-                all_jerks = np.column_stack((all_jerks, jerk))
-        
-        trajectory = np.array([])
+        state_waypoint.time = start_states.time + i/frequency
 
-        if plotting:
-            velocity = np.array([])
-            acceleration = np.array([])
-            jerk = np.array([])
+        state_waypoint.x    = x_states[0][0]
+        state_waypoint.dx   = x_states[1][0]
 
-    if plotting:
-        return all_trajectories, all_velocities, all_accelerations, all_jerks
+        state_waypoint.y  = y_states[0][0]
+        state_waypoint.dy = y_states[1][0]
 
-    else:
-        return all_trajectories
+        state_waypoint.z  = z_states[0][0]
+        state_waypoint.dz = z_states[1][0]
 
+        states_array.state_array.append(deepcopy(state_waypoint))
 
-def plot_data(x, y, ax, title, ylabel):
-    ax.plot(x, y)
-    ax.set_title(title, color='xkcd:white')
-    ax.set_xlabel('time', color='xkcd:white')
-    ax.set_ylabel(ylabel, color='xkcd:white')
-
-
-def plot_all(trajectory, velocity, acceleration, jerk, time):
-    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(8,8))
-    fig.patch.set_facecolor('xkcd:black')
-    for i in range(2):
-        for j in range(2):
-            ax[i, j].set_facecolor('xkcd:black')
-            ax[i, j].tick_params(color='xkcd:white', labelcolor='xkcd:white')
-            ax[i, j].spines['bottom'].set_color('xkcd:white')
-            ax[i, j].spines['top'].set_color('xkcd:white')
-            ax[i, j].spines['right'].set_color('xkcd:white')
-            ax[i, j].spines['left'].set_color('xkcd:white')
-    
-    dimension = trajectory.shape[1]
-
-    for d in range(dimension):
-        plot_data(time, trajectory[:, d], ax[0,0], 'Trajectory', 'position')
-        plot_data(time, velocity[:, d], ax[0,1], 'Velocity', 'velocity')
-        plot_data(time, acceleration[:, d], ax[1,0], 'Acceleration', 'acceleration')
-        plot_data(time, jerk[:, d], ax[1,1], 'Jerk', 'jerk')
-
-    if dimension > 1:
-        data_labels = ['x', 'y', 'z']
-        for i in range(2):
-            for j in range(2):
-                ax[i, j].legend(data_labels[:dimension])
-
-    plt.tight_layout()
-    plt.show()
-
-
-def minimum_jerk(coord_start, coord_end, frequency, move_time):
-    '''
-    Parameters:
-        coord_start: Starting coordinate of trajectory
-            - type: could be a float/int or a list/tuple of coordinates depending on dimension of desired trajectory
-            - examples: 1, 1.0, (1.0, 2.0), [1, 2.0, 3]
-
-        coord_end: Ending coordinate of trajectory
-            - same format as coord_start
-
-        frequency: Need to further investigate how to tune this parameter.
-            The loop frequency of your system
-
-        move_time: time you want to take to reach destination
-
-    Returns:
-        minimum jerk trajectory: numpy array of waypoints for each trajectory
-            - dimension depends on the input coordinates
-            - 1D trajectory -> (n,) array
-            - (x, y, z) trajectory -> (n X 3) array where each column is the trajectory for the corresponding axis
-    '''
-    trajectory = np.array([]) # will append waypoints in the loop
-    time_freq = int(move_time * frequency) # number of waypoints to compose the trajectory
-
-    try:
-        # check if the input coordinates are 1D or higher dimension
-        _ = iter(coord_start)
-    except TypeError:
-        # need to put 1D coordinate into a list to make looping easy
-        coord_start = [coord_start]
-        coord_end = [coord_end]
-
-    dimension = len(coord_start) # 1, 2, or 3
-    
-    for d in range(dimension): # loop through each dimension 
-
-        for t in range(1, time_freq): # inner loop creates a trajectory for a single dimension
-            waypoint = get_waypoint(coord_start[d], coord_end[d], t, time_freq)
-            trajectory = np.append(trajectory, waypoint)
-        
-        if d == 0:
-            # return variable equals the 1D trajectory after the first outer loop iteration
-            all_trajectories = trajectory
-        else:
-            # if we are calculating a multidimensional trajectory then stack the trajectories by column
-            all_trajectories = np.column_stack((all_trajectories, trajectory))
-        
-        trajectory = np.array([]) # reset variable for next dimension trajectory
-
-    return all_trajectories
-
-
-def minimum_jerk_pose(start_pose, end_pose, frequency, move_time):
-    waypoint_pose = Pose()
-    trajectory = PoseArray() # will append pose waypoints in the loop
-    time_freq = int(move_time * frequency) # number of waypoints to compose the trajectory
-
-    for t in range(1, time_freq): # inner loop creates a trajectory for a single dimension
-        waypoint_x = get_waypoint(start_pose.position.x, end_pose.position.x, t, time_freq)
-        waypoint_y = get_waypoint(start_pose.position.y, end_pose.position.y, t, time_freq)
-        waypoint_z = get_waypoint(start_pose.position.z, end_pose.position.z, t, time_freq)
-        waypoint_pose.position.x = waypoint_x
-        waypoint_pose.position.y = waypoint_y
-        waypoint_pose.position.z = waypoint_z
-        trajectory.poses.append(deepcopy(waypoint_pose))
-
-    return trajectory
+    return 
