@@ -24,6 +24,8 @@ class Simulator:
 
         self.mpc = MPC(A, B, C, Q, R, RD, umin, umax, N)
 
+        plt.rcParams['savefig.facecolor'] = 'xkcd:black'
+
 
     def get_reference_trajectory(self, n, model_type=0):
         self.t = np.linspace(1, n, n)
