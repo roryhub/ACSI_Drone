@@ -14,13 +14,13 @@ def generate_coefficients(initial, final, move_time):
 
     tf = move_time
     jerk_matrix = np.matrix([[1, 0, 0, 0, 0, 0],[0, 1, 0, 0, 0, 0],[0, 0, 2, 0, 0, 0],[1,tf,tf**2,tf**3,tf**4,tf**5],[0, 1, 2*tf, 3*tf**2, 4*tf**3, 5*tf**4],[0, 0, 2, 6*tf, 12*tf**2, 20*tf**3]])
-    conditions  = np.stack((initial, final), axis=0)
+    conditions  = np.concatenate((initial, final))
 
-    return np.inv(jerk_matrix) @ conditions
+    return np.linalg.inv(jerk_matrix) @ conditions
 
 def generate_states(coefficients, t):
     state_matrix = np.matrix([[1, t, t**2, t**3, t**4, t**5], [0, 1, 2*t, 3*t**2, 4*t**3, 5*t**4], [0, 0, 2, 6*t, 12*t**2, 20*t**3]])
-    return coefficients @ state_matrix
+    return state_matrix @ coefficients
 
 def minimum_jerk(start_states, end_states, frequency, move_time):
     '''
@@ -61,4 +61,26 @@ def minimum_jerk(start_states, end_states, frequency, move_time):
 
         states_array.state_array.append(deepcopy(state_waypoint))
 
-    return 
+    return states_array
+
+if __name__ == '__main__':
+    start = Drone_States()
+    end   = Drone_States()
+
+    start.dx = 6
+    start.dy = 5
+    start.dz = 5
+    start.dx = 5
+    start.dy = 1
+    start.dz = 1
+
+    end.dx = 0
+    end.dy = 0
+    end.dz = 0
+    end.dx = 0
+    end.dy = 0
+    end.dz = 0
+
+    traj = minimum_jerk(start, end, 1, 10)
+    print(traj)
+   
