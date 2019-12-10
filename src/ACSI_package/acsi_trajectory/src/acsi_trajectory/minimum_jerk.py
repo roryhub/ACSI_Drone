@@ -206,3 +206,15 @@ def minimum_jerk_pose(start_pose, end_pose, frequency, move_time):
         trajectory.poses.append(deepcopy(waypoint_pose))
 
     return trajectory
+
+if __name__ == '__main__':
+    plt.rcParams['savefig.facecolor'] = 'xkcd:black'
+
+    coord_start = (0, 0, 0)
+    coord_end = (5, 10, 15)
+    frequency = 100
+    move_time = 10
+
+    a, b, c, d = minimum_jerk_extra(coord_start, coord_end, frequency, move_time, plotting=True)
+
+    plot_all(a, b, c, d, np.linspace(1,10,999))
