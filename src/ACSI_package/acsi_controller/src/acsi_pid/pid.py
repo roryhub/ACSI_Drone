@@ -63,7 +63,8 @@ class PID:
             self.local_error_hist.pop()
    
     def error_calc(self):
-        self.current_global_error.time = rospy.Time.now()
+        
+        self.current_global_error.time = rospy.Time.now().nsecs*1e-9+rospy.Time.now().secs
         self.current_global_error.x    = self.desired_global_state.x   - self.current_global_state.x
         self.current_global_error.y    = self.desired_global_state.y   - self.current_global_state.y
         self.current_global_error.z    = self.desired_global_state.z   - self.current_global_state.z
@@ -97,7 +98,7 @@ class PID:
 
         if len(self.global_error_hist) >= 10:
 
-            Ts = (self.global_error_hist[0].time.nsecs-self.global_error_hist[4].time.nsecs)/(4*1e-9) #making sample time the average in the last five samples converted to seconds
+            Ts = (self.global_error_hist[0].time-self.global_error_hist[4].time)/(4) #making sample time the average in the last five samples converted to seconds
 
             self.current_global_error.dx = -(-self.global_error_hist[0].x + 8.0*self.global_error_hist[1].x - 8.0*self.global_error_hist[3].x + self.global_error_hist[4].x)/(12.0*Ts)
             self.current_global_error.dy = -(-self.global_error_hist[0].y + 8.0*self.global_error_hist[1].y - 8.0*self.global_error_hist[3].y + self.global_error_hist[4].y)/(12.0*Ts)

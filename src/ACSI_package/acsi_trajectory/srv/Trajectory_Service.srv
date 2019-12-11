@@ -1,0 +1,4 @@
+float32 frequency
+float32 speed
+---
+acsi_observer/Drone_States_Array trajectory_states

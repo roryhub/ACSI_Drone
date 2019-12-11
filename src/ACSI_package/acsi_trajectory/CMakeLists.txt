@@ -5,15 +5,22 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   rospy
   std_msgs
+  acsi_observer
   message_generation
 )
 
 catkin_python_setup()
 
+add_service_files(
+  FILES
+  Trajectory_Service.srv
+)
+
 generate_messages(
   DEPENDENCIES
   geometry_msgs
   std_msgs
+  acsi_observer
 )
 
 catkin_package(
@@ -27,5 +34,6 @@ include_directories(
 
 install(PROGRAMS
   nodes/trajectory_node
+  nodes/trajectory_service
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

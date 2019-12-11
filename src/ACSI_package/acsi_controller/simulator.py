@@ -4,7 +4,7 @@ from scipy import signal
 from scipy.io import loadmat
 import os
 
-from mpc import MPC
+from src.acsi_mpc.mpc import MPC
 
 
 class Simulator:
@@ -166,8 +166,8 @@ def main(model_type=0):
         umax = np.array([1.0])
 
     else: # MIMO
-        directory = 'Crazyflie_Matlab'
-        fname = 'Rory.mat'
+        directory = 'models'
+        fname = 'Crazyflie_Model.mat'
 
         full_path = os.path.join(directory, fname)
 
