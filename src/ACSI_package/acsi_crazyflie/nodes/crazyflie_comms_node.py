@@ -11,7 +11,7 @@ import rospy
 import logging
 import time
 import threading
-
+from math import pi
 import cflib
 from cflib.crazyflie import Crazyflie
 from std_msgs.msg import String
@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.ERROR)
 
 def command_callback(command):
     global command_goal
-    command_goal = command
+    command_goal = radians_to_degrees(command)
 
 def keyboard_callback(command):
     global command_goal
@@ -47,6 +47,15 @@ def setpoint_manager(drone):
         command_lock.release()
         r.sleep()
 
+def radians_to_degrees(command):
+
+    new_command = Attitude_Setpoint()
+    new_command.roll     = command.roll/pi*180.0
+    new_command.pitch    = command.pitch/pi*180.0
+    new_command.yaw_rate = command.yaw_rate/pi*180.0
+    new_command.thrust = command.thrust
+
+    return new_command
 
 
 class CrazyflieComm:
@@ -110,12 +119,15 @@ if __name__ == '__main__':
             print('Crazyflies found:')
             for i in available:
                 print(i[0])
-                if(i[0]=='radio://0/70/2M'):
-                    le = CrazyflieComm(i[0])
-                    found = True
-                # if(i[0]=='radio://0/80/2M'):
+                # if(i[0]=='radio://0/70/2M'):
                 #     le = CrazyflieComm(i[0])
                 #     found = True
+                if(i[0]=='radio://0/80/2M'):
+                    le = CrazyflieComm(i[0])
+                    found = True
+                else:
+                    print('looking for radio://0/80/2M')
+                    
         elif found == False :
             print('\rAttempt ' + str(tries) + ' failed, no correct Crazyflie found         ', end =" ")
         if found == True:

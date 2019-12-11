@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 from scipy.io import loadmat
 import os
-
+import time
 from mpc import MPC
 
 
@@ -34,8 +34,8 @@ class Simulator:
         else:
             rx = 3 * np.ones(len(self.t))
             ry = np.ones(len(self.t))
-            rz = signal.square(self.t / 16)
-            ryaw = 2 * signal.square(self.t / 16)
+            rz = signal.square(self.t / 32)
+            ryaw = 2 * signal.square(self.t / 1000)
 
             self.ref_traj = np.row_stack((rx, ry, rz, ryaw))
 
@@ -57,9 +57,9 @@ class Simulator:
                 self.Y_hist = np.column_stack((self.Y_hist, self.C @ X))
             
             remaining_traj = self.ref_traj[:, i:]
-
+            temp = time.time()
             U = self.mpc.get_control_input(X, U, remaining_traj)
-
+            print(time.time()-temp)
             X = self.update_states(X, U)
     
 
@@ -68,13 +68,11 @@ class Simulator:
         X = np.zeros((self.A.shape[1], 1))
 
         return U, X
-    
 
     def update_states(self, X, U):
         X = self.A @ X + self.B @ U
         
         return X
-
 
     def plot(self):
         self.t = self.t * .04
@@ -164,10 +162,9 @@ def main(model_type=0):
         umax = np.array([1.0])
 
     else: # MIMO
-        directory = 'Crazyflie_Matlab'
-        fname = 'Rory.mat'
-
-        full_path = os.path.join(directory, fname)
+        fname = 'Crazyflie_Model.mat'
+        dirname = os.path.dirname(__file__)
+        full_path = os.path.join(dirname, '../../models/'+fname)
 
         matfile = loadmat(full_path)
 
@@ -179,14 +176,14 @@ def main(model_type=0):
         R = np.diag(np.array([1., 1., 1., 1e-8]))
         RD = np.diag(np.array([1000, 1000, 10, 1e-5]))
 
-        umin = np.array([-1, -1, -1, -47000.])[:, np.newaxis]
-        umax = np.array([1, 1, 1, 18000.])[:, np.newaxis]
+        umin = np.array([-.5, -.5, -.5, -47000.])[:, np.newaxis]
+        umax = np.array([.5, .5, .5, 18000.])[:, np.newaxis]
 
     N = 30
 
     sim = Simulator(A, B, C, Q, R, RD, umin, umax, N)
 
-    traj_length = 4*N
+    traj_length = 40*N
 
     sim.get_reference_trajectory(traj_length, model_type=model_type)
 

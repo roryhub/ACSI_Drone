@@ -32,6 +32,7 @@ if __name__ == '__main__':
     start_time = rospy.Time.now()
 
     while not rospy.is_shutdown():
+        print(observer.current_states)
         states_pub.publish(observer.current_states)
         r.sleep()
 

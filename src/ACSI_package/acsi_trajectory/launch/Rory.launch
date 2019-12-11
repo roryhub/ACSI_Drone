@@ -3,11 +3,13 @@
 
 	<!--CSV-->
 
-	<node pkg="acsi_trajectory" type="trajectory_node.py"  name ="trajectory_generator" output="screen" />
+	<node pkg="acsi_trajectory" type="trajectory_service.py"  name ="trajectory_service" output="screen" />
 
 	<node pkg="acsi_controller" type="position_control_node.py"  name ="controller_node" output="screen" launch-prefix="gnome-terminal --geometry 73x31+0+1500 -e"/>
 
 	<node pkg="acsi_crazyflie" type="crazyflie_comms_node.py"  name ="comms_node" output="screen" launch-prefix="gnome-terminal --geometry 73x31+0+0 -e"/>
+
+	<node pkg="acsi_observer" type="observer_node.py"  name ="state_observer_node" output="screen" launch-prefix="gnome-terminal --geometry 73x31+0+3500 -e"/>
 
 	<include file="$(find acsi_vrpn_client)/launch/Wean_Motive.launch" />
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
@@ -224,7 +226,7 @@ class MPC:
         future_control = np.array(sol['x'])
 
         U += future_control[:self.num_outputs]
-
+        print(U.shape)
         return U
 
     

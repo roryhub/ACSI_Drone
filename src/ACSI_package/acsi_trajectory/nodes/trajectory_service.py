@@ -21,14 +21,14 @@ class Health_Monitor:
     drone_states = Drone_States()
     target_location = Drone_States()
 
-    speed = 1 #m/s
+    speed = 1.0 #m/s
 
     drone_received = False
     target_received = False
 
-    goal_time = 0
+    goal_time = 0.0
 
-    freq = 1
+    freq = 1.0
 
     def __init__(self):
         return
@@ -42,22 +42,25 @@ class Health_Monitor:
 
     def gen_trajectory(self):
 
-        if self.drone_received == self.target_received ==True:
+        if self.drone_received == self.target_received == True:
             self.goal_time = self.dist_calc()/self.speed
-            self.trajectory_out = traj.minimum_jerk(self.drone_received, self.target_location, self.freq, self.goal_time)
+            self.trajectory_out = traj.minimum_jerk(self.drone_states, self.target_location, self.freq, self.goal_time)
+        else:
+            print('no targets found')
 
 def handle_trajectory_service(req):
     global monitor
 
     print('recieved trajectory request')
+    print(req.frequency)
+    print(req.speed)
     monitor.freq = req.frequency
     monitor.speed = req.speed
     monitor.gen_trajectory()
-
+    #print(monitor.trajectory_out)
     return monitor.trajectory_out
 
 def observer_callback(observer_states,monitor):
-
     monitor.drone_states = observer_states
     monitor.drone_received = True
 
@@ -65,7 +68,7 @@ def target_callback(optitrak_location,monitor):
 
     monitor.target_location.time = rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9
     monitor.target_location.x = optitrak_location.pose.position.x
-    monitor.target_location.y = optitrak_location.pose.position.y
+    monitor.target_location.y = optitrak_location.pose.position.y + .5
     monitor.target_location.z = optitrak_location.pose.position.z
     monitor.target_location.dx = 0
     monitor.target_location.dy = 0
@@ -73,7 +76,7 @@ def target_callback(optitrak_location,monitor):
 
     monitor.target_received = True
 
-monitor = Health_Monitor()
+monitor = Health_Monitor() #Can't think of a better way to get this into the service call since it can't take args
 
 if __name__ == '__main__':
 
@@ -81,7 +84,7 @@ if __name__ == '__main__':
     s = rospy.Service('generate_trajectory', Trajectory_Service, handle_trajectory_service)
     
     #These subscribers currently use the vrpn_client_node library and not Bedillian's I plan on writiing a handler that deals with them seperately and publishes them to identical topics so that this node is agnostic to the data source
-    rospy.Subscriber('/state_observer_node/current_states',Drone_States,observer_callback,callback_args=monitor)
+    rospy.Subscriber('/observer/states',Drone_States,observer_callback,callback_args=monitor)
     rospy.Subscriber("/vrpn_client_node/Target/pose", PoseStamped, target_callback, callback_args=monitor) #TODO: Determine topic name, right now just uses standard vrpn_client_node formatting
 
     print('ready to generate trajectories')
