@@ -226,7 +226,7 @@ class MPC:
         future_control = np.array(sol['x'])
 
         U += future_control[:self.num_outputs]
-        print(U.shape)
+        #print(U.shape)
         return U
 
     

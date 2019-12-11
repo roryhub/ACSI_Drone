@@ -8,7 +8,7 @@ TODO: Possible issues with Optitrack environment alignment on initialization. Ma
 
 import rospy
 from acsi_controller.msg import Attitude_Setpoint, Attitude_Error, Drone_Pid_Settings
-from acsi_observer.msg import Drone_States
+from acsi_observer.msg import Drone_States, Drone_States_Array
 from geometry_msgs.msg import Pose, PoseArray, PoseStamped, PoseStamped
 from std_msgs.msg import String
 from math import sin, cos, pi
@@ -23,16 +23,50 @@ from acsi_trajectory.srv import Trajectory_Service
 trajectory = PoseArray()
 recieved_state = False
 
-class State_Manager:
+class Manager:
     
-    def __init__(self,A,B):
-        self.A = A
-        self.B = B
+    def __init__(self,gains,fname):
+        self.pid = PID(gains)
+        self.current_global_state = Drone_States()
+        self.load_mpc(fname)
+        self.command = Attitude_Setpoint()
         self.X = np.zeros((self.A.shape[1], 1))
+        self.current_trajectory = Drone_States_Array()
+        self.current_setpoint = Drone_States()
+
+    def observer_handle(self,states_message):
+        self.pid.current_global_state = states_message
+        self.correct_states(states_message)
+
+    def load_mpc(self,fname):
+
+        dirname = os.path.dirname(__file__)
+        full_path = os.path.join(dirname, '../models/'+fname)
+
+        matfile = loadmat(full_path)
+
+        self.A = matfile['A']
+        self.B = matfile['B']
+        self.C = matfile['C']
+        self.Q = np.diag(np.array([1000., 10000., 1000., 1000.]))
+        self.R = np.diag(np.array([1., 1., 1., 1e-8]))
+        self.RD = np.diag(np.array([1000, 1000, 10, 1e-5]))
+
+        self.umin = np.array([-.5, -.5, -.5, -47000.])[:, np.newaxis]
+        self.umax = np.array([.5, .5, .5, 18000.])[:, np.newaxis]
+
+        self.N = 30
+        self.mpc = MPC(self.A, self.B, self.C, self.Q, self.R, self.RD, self.umin, self.umax, self.N)
+
+    def spin_mpc(self):
+        return
+    
+    def spin_pid(self):
+        self.command = self.pid.spin_controller()
 
     def update_states(self, command):
-        U = np.matrix([[command.roll],[command.pitch],[command.yaw_rate],[command.thrust]])
-        self.X = self.A @ self.X + self.B @ U
+        self.U = np.matrix([[self.command.roll],[self.command.pitch],[self.command.yaw_rate],[self.command.thrust]])
+        self.X = self.A @ self.X + self.B @ self.U
     
     def correct_states(self, observation):
         self.X[0][0] = observation.y
@@ -56,16 +90,10 @@ def trajectory_callback(trajectory_in):#
         trajectory = trajectory_in
         recieved_trajectory = True
 
-def observer_callback(observer_states,controller):
-    controller.current_global_state = observer_states
+def observer_callback(observer_states,manager):
+    manager.observer_handle(observer_states)
 
-
-# def observer_callback(observer_states,controller):
-#     controller.recieved_state = True
-#     print(observer_states)
-#     controller.current_global_state = deepcopy(observer_states)
-
-def set_gains(gains):
+def set_gains(gains): #Could be a param server pull at some point
     gains.pitch.p  = .6
     gains.pitch.i  = 0
     gains.pitch.d  = .3
@@ -82,42 +110,19 @@ def set_gains(gains):
     gains.thrust.i = 0
     gains.thrust.d = 25000/2
 
-def load_mpc(fname):
-
-    dirname = os.path.dirname(__file__)
-    full_path = os.path.join(dirname, '../models/'+fname)
-
-    matfile = loadmat(full_path)
-
-    A = matfile['A']
-    B = matfile['B']
-    C = matfile['C']
-    Q = np.diag(np.array([1000., 10000., 1000., 1000.]))
-    R = np.diag(np.array([1., 1., 1., 1e-8]))
-    RD = np.diag(np.array([1000, 1000, 10, 1e-5]))
-
-    umin = np.array([-.5, -.5, -.5, -47000.])[:, np.newaxis]
-    umax = np.array([.5, .5, .5, 18000.])[:, np.newaxis]
-
-    N = 30
-
-    state_manager  = State_Manager(A,B)
-
-    return MPC(A, B, C, Q, R, RD, umin, umax, N), state_manager
-
 if __name__ == '__main__':
     rospy.init_node('position_controller_node')
 
+    model_fname = 'Crazyflie_Model.mat'
+
     gains = Drone_Pid_Settings() #bring down from the param server eventually?
-    set_gains(gains)
 
     status_pub = rospy.Publisher('pid_controller/status',String,queue_size=2)
-    pid_controller = PID.PID(gains)
 
-    mpc, state_manager = load_mpc('Crazyflie_Model.mat')
+    manager = Manager(gains, model_fname)
 
     setpoint_pub = rospy.Publisher('controller/ypr',Attitude_Setpoint,queue_size=2)
-    rospy.Subscriber('/observer/states',Drone_States,observer_callback,callback_args=pid_controller)
+    rospy.Subscriber('/observer/states',Drone_States,observer_callback,callback_args=manager)
     rospy.Subscriber('/trajectory/drone_trajectory',PoseArray,trajectory_callback)
 
     get_trajectory = rospy.ServiceProxy('generate_trajectory',Trajectory_Service)
@@ -147,6 +152,9 @@ if __name__ == '__main__':
         print(time_spent)
         if time_spent < 7:
             current_goal = hover_state
+            if time_spent > 5:
+                manager.restore_to_hover()
+
         elif time_spent < 15:
             if got_trajectory == False:
                 traj_desired = get_trajectory(1/.04, .5).trajectory_states

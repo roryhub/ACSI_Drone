@@ -24,7 +24,6 @@ class PID:
     current_global_error  = Drone_States()
     current_global_state  = Drone_States()
     desired_global_state  = Drone_States()
-    recieved_state = False
     
     global_error_hist = []
     local_error_hist = []
@@ -39,11 +38,9 @@ class PID:
     def spin_controller(self,desired_state):
         self.desired_global_state = desired_state
         if self.current_global_state == Drone_States():
-            pass
-            # print('current state not recieved')
+            print('current state not recieved')
         else:
             #print(self.current_global_state)
-            self.recieved_state = True
             self.error_update()
             self.altitude_controller()
             self.yaw_controller()
