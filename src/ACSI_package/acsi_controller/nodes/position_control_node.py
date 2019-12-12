@@ -11,7 +11,7 @@ from acsi_controller.msg import Attitude_Setpoint, Attitude_Error, Drone_Pid_Set
 from acsi_observer.msg import Drone_States, Drone_States_Array
 from geometry_msgs.msg import Pose, PoseArray, PoseStamped, PoseStamped
 from std_msgs.msg import String
-from math import sin, cos, pi
+from math import sin, cos, pi, sqrt
 import numpy as np
 from copy import deepcopy
 import os
@@ -26,17 +26,60 @@ recieved_state = False
 class Manager:
     
     def __init__(self,gains,fname):
-        self.pid = PID(gains)
+        self.pid = PID.PID(gains)
         self.current_global_state = Drone_States()
         self.load_mpc(fname)
         self.command = Attitude_Setpoint()
         self.X = np.zeros((self.A.shape[1], 1))
         self.current_trajectory = Drone_States_Array()
         self.current_setpoint = Drone_States()
+        self.run_state = self.wait_for_drone
+        self.status = 'initiating'
+        self.observer_states = Drone_States()
+        self.take_off_goal = Drone_States()
+        self.hover_height = 1.5
+        self.drone_speed = .5
+        self.control_type = 'mpc'
 
     def observer_handle(self,states_message):
         self.pid.current_global_state = states_message
         self.correct_states(states_message)
+        self.observer_states = states_message
+
+    def wait_for_drone(self):
+        self.status = 'waiting for drone state'
+        if self.observer_states!=Drone_States():
+            self.run_state = self.take_off_protocol
+            self.take_off_goal = self.observer_states
+            self.take_off_goal.y = self.hover_height
+
+    def run_trajectory(self):
+        self.status = 'executing trajectory'
+        if self.control_type == 'mpc':
+            self.spin_mpc()
+        elif self.control_type == 'pid':
+            self.spin_pid()
+            self.current_trajectory.state_array.pop(0)
+
+
+    def take_off_protocol(self):
+        self.status = 'in take off protocol'
+        self.current_setpoint = self.take_off_goal
+        self.current_trajectory.state_array = [self.take_off_goal]
+        self.spin_pid
+        print(self.error_distance())
+        if self.error_distance() < .1:
+            self.run_state = self.command_mode
+
+    def command_mode(self):
+        self.status = 'locked and loaded'
+        self.restore_to_hover
+        self.spin_pid()
+
+    def error_distance(self):
+        
+        return 0#sqrt((self.observer_states.x-self.current_setpoint.x)**2 + (self.observer_states.y-self.current_setpoint.y)**2 + (self.observer_states.z-self.current_setpoint.z)**2)
+
 
     def load_mpc(self,fname):
 
@@ -59,12 +102,19 @@ class Manager:
         self.mpc = MPC(self.A, self.B, self.C, self.Q, self.R, self.RD, self.umin, self.umax, self.N)
 
     def spin_mpc(self):
-        return
+        mpc_traj = np.matrix([[]])
+        for i in self.current_trajectory.state_array:
+            mpc_traj = np.column_stack(mpc_traj,np.matrix([[i.x],[i.y],[i.z],[i.yaw]]))
+        
+        self.command = self.mpc.get_control_input(self.X,self.U,mpc_traj)
+        self.update_states()
+        self.current_trajectory.state_array.pop(0)
+        
     
     def spin_pid(self):
-        self.command = self.pid.spin_controller()
+        self.command = self.pid.spin_controller(self.current_setpoint)
 
-    def update_states(self, command):
+    def update_states(self):
         self.U = np.matrix([[self.command.roll],[self.command.pitch],[self.command.yaw_rate],[self.command.thrust]])
         self.X = self.A @ self.X + self.B @ self.U
     
@@ -81,14 +131,6 @@ class Manager:
         self.X[1][0] = old_X[1][0]
         self.X[2][0] = old_X[2][0]
         self.X[3][0] = old_X[3][0]
-
-
-def trajectory_callback(trajectory_in):#
-    global recieved_trajectory, trajectory
-
-    if recieved_trajectory == False and len(trajectory_in.poses) > 2:
-        trajectory = trajectory_in
-        recieved_trajectory = True
 
 def observer_callback(observer_states,manager):
     manager.observer_handle(observer_states)
@@ -123,7 +165,6 @@ if __name__ == '__main__':
 
     setpoint_pub = rospy.Publisher('controller/ypr',Attitude_Setpoint,queue_size=2)
     rospy.Subscriber('/observer/states',Drone_States,observer_callback,callback_args=manager)
-    rospy.Subscriber('/trajectory/drone_trajectory',PoseArray,trajectory_callback)
 
     get_trajectory = rospy.ServiceProxy('generate_trajectory',Trajectory_Service)
 
@@ -147,30 +188,19 @@ if __name__ == '__main__':
     current_goal = Drone_States()
     current_goal = hover_state
 
+    timer = -1
     while not rospy.is_shutdown():
-        time_spent = (rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9) - start_time
-        print(time_spent)
-        if time_spent < 7:
-            current_goal = hover_state
-            if time_spent > 5:
-                manager.restore_to_hover()
-
-        elif time_spent < 15:
-            if got_trajectory == False:
-                traj_desired = get_trajectory(1/.04, .5).trajectory_states
-                current_goal = hover_state
-                got_trajectory = True
+        manager.run_state()
+        if manager.run_state == manager.command_mode:
+            if timer == -1:
+                timer = rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9
+            elif timer >= 3:
+                traj = get_trajectory(freq,manager.drone_speed)
+                manager.current_trajectory = traj.trajectory_states
+                timer = -2
             else:
-                if i < len(traj_desired.state_array):
-                    current_goal = traj_desired.state_array[i]
-                    i = i+1
-                elif i >= len(traj_desired.state_array):
-                    current_goal = traj_desired.state_array[-1]
-        else:
-            current_goal.y = 1.5 
-
-        print(current_goal)
-        command_setpoint = pid_controller.spin_controller(current_goal)
-        setpoint_pub.publish(command_setpoint)
+                manager.control_type = 'mpc'
+                manager.run_state = manager.run_trajectory
+        print(manager.status)
+            
         r.sleep()
-
