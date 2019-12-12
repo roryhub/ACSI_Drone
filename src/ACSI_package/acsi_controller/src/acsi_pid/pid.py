@@ -45,7 +45,8 @@ class PID:
             self.altitude_controller()
             self.yaw_controller()
             self.position_controller()
-            #print(self.control_output)
+            #print(self.current_local_error)
+        
         return self.control_output
 
     def error_update(self):

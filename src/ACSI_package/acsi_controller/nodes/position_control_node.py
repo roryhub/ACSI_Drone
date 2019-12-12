@@ -38,7 +38,7 @@ class Manager:
         self.observer_states = Drone_States()
         self.take_off_goal = Drone_States()
         self.hover_height = 1.5
-        self.drone_speed = .5
+        self.drone_speed = .2
         self.control_type = 'mpc'
 
     def observer_handle(self,states_message):
@@ -58,27 +58,29 @@ class Manager:
         if self.control_type == 'mpc':
             self.spin_mpc()
         elif self.control_type == 'pid':
+            self.current_setpoint = self.current_trajectory.state_array[0]
             self.spin_pid()
-            self.current_trajectory.state_array.pop(0)
+            if(len(self.current_trajectory.state_array)>1):
+                self.current_trajectory.state_array.pop(0)
 
 
     def take_off_protocol(self):
         self.status = 'in take off protocol'
         self.current_setpoint = self.take_off_goal
         self.current_trajectory.state_array = [self.take_off_goal]
-        self.spin_pid
-        print(self.error_distance())
-        if self.error_distance() < .1:
+        self.spin_pid()
+        if self.error_distance() < .2:
             self.run_state = self.command_mode
+        else:
+            print(self.error_distance())
 
     def command_mode(self):
         self.status = 'locked and loaded'
-        self.restore_to_hover
         self.spin_pid()
 
     def error_distance(self):
         
-        return 0#sqrt((self.observer_states.x-self.current_setpoint.x)**2 + (self.observer_states.y-self.current_setpoint.y)**2 + (self.observer_states.z-self.current_setpoint.z)**2)
+        return sqrt((self.observer_states.x-self.current_setpoint.x)**2 + (self.observer_states.y-self.current_setpoint.y)**2 + (self.observer_states.z-self.current_setpoint.z)**2)
 
 
     def load_mpc(self,fname):
@@ -94,62 +96,64 @@ class Manager:
         self.Q = np.diag(np.array([1000., 10000., 1000., 1000.]))
         self.R = np.diag(np.array([1., 1., 1., 1e-8]))
         self.RD = np.diag(np.array([1000, 1000, 10, 1e-5]))
+        self.U = np.zeros((self.B.shape[1], 1))
+        self.X = np.zeros((self.A.shape[1], 1))
 
-        self.umin = np.array([-.5, -.5, -.5, -47000.])[:, np.newaxis]
-        self.umax = np.array([.5, .5, .5, 18000.])[:, np.newaxis]
+        self.umin = np.array([-.2, -.2, -.2, -18000.])[:, np.newaxis]
+        self.umax = np.array([.2, .2, .2, 18000.])[:, np.newaxis]
 
         self.N = 30
         self.mpc = MPC(self.A, self.B, self.C, self.Q, self.R, self.RD, self.umin, self.umax, self.N)
 
     def spin_mpc(self):
-        mpc_traj = np.matrix([[]])
+        mpc_traj = []
         for i in self.current_trajectory.state_array:
-            mpc_traj = np.column_stack(mpc_traj,np.matrix([[i.x],[i.y],[i.z],[i.yaw]]))
+            if mpc_traj == []:
+                mpc_traj = np.matrix([[i.x],[i.y],[i.z],[i.yaw]])
+            else:
+                mpc_traj = np.column_stack((mpc_traj,np.matrix([[i.x],[i.y],[i.z],[i.yaw]])))
         
-        self.command = self.mpc.get_control_input(self.X,self.U,mpc_traj)
+        self.U = self.mpc.get_control_input(self.X,self.U,mpc_traj)
+        self.command.roll = self.U[0,0]
+        self.command.pitch = self.U[1,0]
+        self.command.yaw_rate = self.U[2,0]
+        self.command.thrust = self.U[3,0] + 47000
         self.update_states()
-        self.current_trajectory.state_array.pop(0)
+        if(len(self.current_trajectory.state_array)>1):
+            self.current_trajectory.state_array.pop(0)
         
     
     def spin_pid(self):
+        self.pid.current_global_state = self.observer_states
         self.command = self.pid.spin_controller(self.current_setpoint)
 
     def update_states(self):
-        self.U = np.matrix([[self.command.roll],[self.command.pitch],[self.command.yaw_rate],[self.command.thrust]])
         self.X = self.A @ self.X + self.B @ self.U
     
     def correct_states(self, observation):
-        self.X[0][0] = observation.y
-        self.X[1][0] = observation.z
-        self.X[2][0] = observation.x
-        self.X[3][0] = observation.yaw
-
-    def restore_to_hover(self):
-        old_X = self.X
-        self.X = np.zeros((self.A.shape[1], 1))
-        self.X[0][0] = old_X[0][0]
-        self.X[1][0] = old_X[1][0]
-        self.X[2][0] = old_X[2][0]
-        self.X[3][0] = old_X[3][0]
+        self.X[0,0] = observation.z
+        self.X[1,0] = observation.x
+        self.X[2,0] = observation.y
+        self.X[3,0] = observation.yaw
 
 def observer_callback(observer_states,manager):
     manager.observer_handle(observer_states)
 
 def set_gains(gains): #Could be a param server pull at some point
     gains.pitch.p  = .6
-    gains.pitch.i  = 0
+    gains.pitch.i  = 0.0
     gains.pitch.d  = .3
 
     gains.roll.p   = .6
-    gains.roll.i   = 0
+    gains.roll.i   = 0.0
     gains.roll.d   = .3
 
-    gains.yaw.p    = 0
-    gains.yaw.i    = 0
-    gains.yaw.d    = 0
+    gains.yaw.p    = 0.0
+    gains.yaw.i    = 0.0
+    gains.yaw.d    = 0.0
 
     gains.thrust.p = 25000/2
-    gains.thrust.i = 0
+    gains.thrust.i = 0.0
     gains.thrust.d = 25000/2
 
 if __name__ == '__main__':
@@ -158,6 +162,7 @@ if __name__ == '__main__':
     model_fname = 'Crazyflie_Model.mat'
 
     gains = Drone_Pid_Settings() #bring down from the param server eventually?
+    set_gains(gains)
 
     status_pub = rospy.Publisher('pid_controller/status',String,queue_size=2)
 
@@ -188,19 +193,24 @@ if __name__ == '__main__':
     current_goal = Drone_States()
     current_goal = hover_state
 
-    timer = -1
+    timer = 0
+    stage = 1
     while not rospy.is_shutdown():
         manager.run_state()
         if manager.run_state == manager.command_mode:
-            if timer == -1:
+            if stage == 1:
                 timer = rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9
-            elif timer >= 3:
+                stage = 2
+            elif rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9 - timer >= 3 and stage == 2:
                 traj = get_trajectory(freq,manager.drone_speed)
                 manager.current_trajectory = traj.trajectory_states
-                timer = -2
-            else:
+                stage = 3
+            elif stage == 3:
                 manager.control_type = 'mpc'
                 manager.run_state = manager.run_trajectory
+                stage = 4
+        print(manager.current_setpoint)
         print(manager.status)
+        setpoint_pub.publish(manager.command)
             
         r.sleep()

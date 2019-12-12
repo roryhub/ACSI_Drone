@@ -111,10 +111,10 @@ class Simulator:
                 'Yaw',
                 'Thrust'
             ]
-
+            X_change = np.vstack((self.X_hist[1, :],self.X_hist[2, :],self.X_hist[0, :],self.X_hist[3, :]))
             for i in range(self.num_outputs):   
                 axY[i].plot(self.t, self.ref_traj[i, :])
-                axY[i].plot(self.t, self.Y_hist[i, :])
+                axY[i].plot(self.t, X_change[i, :])
                 axY[i].set_title(Y_labels[i], color='xkcd:white')
 
                 axU[i].plot(self.t, self.U_hist[i, :])
@@ -176,7 +176,7 @@ def main(model_type=0):
         R = np.diag(np.array([1., 1., 1., 1e-8]))
         RD = np.diag(np.array([1000, 1000, 10, 1e-5]))
 
-        umin = np.array([-.5, -.5, -.5, -47000.])[:, np.newaxis]
+        umin = np.array([-.5, -.5, -.5, -10000.])[:, np.newaxis]
         umax = np.array([.5, .5, .5, 18000.])[:, np.newaxis]
 
     N = 30
