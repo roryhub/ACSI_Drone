@@ -56,6 +56,7 @@ class Manager:
     def run_trajectory(self):
         self.status = 'executing trajectory'
         if self.control_type == 'mpc':
+            self.current_setpoint = self.current_trajectory.state_array[0]
             self.spin_mpc()
         elif self.control_type == 'pid':
             self.current_setpoint = self.current_trajectory.state_array[0]
@@ -168,6 +169,7 @@ if __name__ == '__main__':
 
     manager = Manager(gains, model_fname)
 
+    goal_pub = rospy.Publisher('controller/goal',Drone_States,queue_size=2)
     setpoint_pub = rospy.Publisher('controller/ypr',Attitude_Setpoint,queue_size=2)
     rospy.Subscriber('/observer/states',Drone_States,observer_callback,callback_args=manager)
 
@@ -209,8 +211,9 @@ if __name__ == '__main__':
                 manager.control_type = 'mpc'
                 manager.run_state = manager.run_trajectory
                 stage = 4
-        print(manager.current_setpoint)
         print(manager.status)
+        goal_pub.publish(manager.current_setpoint)
+        status_pub.publish(manager.status)
         setpoint_pub.publish(manager.command)
             
         r.sleep()
