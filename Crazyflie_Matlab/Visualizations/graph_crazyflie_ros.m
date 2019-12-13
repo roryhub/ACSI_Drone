@@ -1,12 +1,14 @@
 clear all
 close all
-bag = rosbag('test.bag');
-bagInfo = rosbag('info','test.bag');
+bag = rosbag('PID_Trajectory.bag');
+bagInfo = rosbag('info','PID_Trajectory.bag');
 
-target_select = select(bag, 'Topic', '/vrpn_client_node/Target/pose')
+control_select = select(bag, 'Topic', '/controller/ypr');
+target_select = select(bag, 'Topic', '/vrpn_client_node/Target/pose');
 state_select = select(bag, 'Topic', '/controller/state');
 goal_select = select(bag, 'Topic', '/controller/goal');
 
+control_structs = readMessages(control_select,'DataFormat','struct');
 target_structs = readMessages(target_select,'DataFormat','struct');
 state_structs = readMessages(state_select,'DataFormat','struct');
 goal_structs = readMessages(goal_select,'DataFormat','struct');
@@ -20,6 +22,16 @@ for i=1:size(state_structs,1)
         state_matrix(3,i) = state_structs{i,1}.Y;
         state_matrix(4,i) = state_structs{i,1}.Z;
         state_matrix(5,i) = state_structs{i,1}.Yaw;
+    end
+end
+
+for i=1:size(control_structs,1)
+    if(state_structs{i,1}.Time<cutoffTime)
+        control_matrix(1,i) = state_structs{i,1}.Time;
+        control_matrix(2,i) = control_structs{i,1}.Roll;
+        control_matrix(3,i) = control_structs{i,1}.Pitch;
+        control_matrix(4,i) = control_structs{i,1}.YawRate;
+        control_matrix(5,i) = control_structs{i,1}.Thrust;
     end
 end
 
@@ -54,4 +66,27 @@ zlabel('Y Axis')
 
 axis([-1.5 1.5, -2.5, .5, -.5, 2.5])
 grid on
+
+figure()
+subplot(4,1,1)
+plot(control_matrix(1,:),control_matrix(2,:),'LineWidth',2)
+xlabel('Time')
+ylabel('Angle (rad)')
+title('Control Usage Roll')
+subplot(4,1,2)
+plot(control_matrix(1,:),control_matrix(3,:),'LineWidth',2)
+xlabel('Time')
+ylabel('Angle (rad)')
+title('Control Usage Pitch')
+subplot(4,1,3)
+plot(control_matrix(1,:),control_matrix(4,:),'LineWidth',2)
+xlabel('Time')
+ylabel('Angle Rate (rad/s)')
+title('Control Usage Yaw Rate')
+subplot(4,1,4)
+plot(control_matrix(1,:),control_matrix(5,:),'LineWidth',2)
+xlabel('Time')
+ylabel('Thrust Command')
+title('Control Usage Thrust')
+
 
