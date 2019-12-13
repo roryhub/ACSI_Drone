@@ -43,7 +43,7 @@ def minimum_jerk(start_states, end_states, frequency, move_time):
     coefficients_y = generate_coefficients(y_start, y_end, move_time)
     coefficients_z = generate_coefficients(z_start, z_end, move_time)
 
-    for i in range(1, N): # loop creates a trajectory all dimensions at once
+    for i in range(1, N+1): # loop creates a trajectory all dimensions at once
         x_states = generate_states(coefficients_x, i/frequency)
         y_states = generate_states(coefficients_y, i/frequency)
         z_states = generate_states(coefficients_z, i/frequency)
@@ -63,6 +63,7 @@ def minimum_jerk(start_states, end_states, frequency, move_time):
 
     return states_array
 
+<<<<<<< HEAD
 if __name__ == '__main__':
     start = Drone_States()
     end   = Drone_States()
@@ -80,3 +81,27 @@ if __name__ == '__main__':
     end.dx = 0
     end.dy = 0
     end.dz = 0
+=======
+
+
+# if __name__ == '__main__':
+#     start = Drone_States()
+#     end   = Drone_States()
+
+#     start.x = 6
+#     start.y = 5
+#     start.z = 5
+#     start.dx = 5
+#     start.dy = 1
+#     start.dz = 1
+
+#     end.x = 0
+#     end.y = 0
+#     end.z = 0
+#     end.dx = 0
+#     end.dy = 0
+#     end.dz = 0
+
+#     traj = minimum_jerk(start, end, 1, 10)
+#     print(traj)
+>>>>>>> upstream/master

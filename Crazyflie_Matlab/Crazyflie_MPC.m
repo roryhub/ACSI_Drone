@@ -1,22 +1,30 @@
+%% Remove this if running in simulink (?)
+clc
+clear
+close all
 
-% Adjust these matrices for crazyflie
-dynamics_sys = load('linearization_test_4output.mat');
-A = dynamics_sys.linsys1.A;
-B = dynamics_sys.linsys1.B;
-C = dynamics_sys.linsys1.C;
+% Get system model
+load('Rory.mat')
 
 % Let nu = number of control inputs
 % Let nx = number of states
 % Let nob = number of observed states
 nu = size(B,2);
-nx = size(A,2);
+nx = size(A,1);
 nob = size(C,1);
 
-R = 1/10*eye(nu); %Penalty to control value. Adjust to number of control inputs we have (nu). 4 thrust/ypr?
-RD = 1*eye(nu);  %Weight the slew rate - respect actuation bandwidths. Adjust to number of control inputs (nu) (4?)
-Q = 1*eye(nob);  %Adjust to how many states we want to control. 6 position/velocity. How many angular? (nob)
+% Roll, pitch, yaw rate, thrust
+R = diag([1, 1, 1, 1e-8]); % Penalty to control usage. Thrust values are very high 10^4 so make penalty very small
 
-N = 5;  %Change the horizon for MPC
+%Penalty to change in control usage. These weights should be small.
+RD = diag([1/100, 1/100, 1/10, 1e-8]);
+
+% X, Y, Z, Yaw
+% Penalty for reference tracking error. Care most about Y (height).
+Q = diag([1000, 10000, 1000, 1000]);
+
+N = 20;  %Change the horizon for MPC
+
 Qbar = []; % Should be nob*N x nob*N
 Rbar = []; % Should be nu*N x nu*N
 RbarD = []; % Should be nu*N x nu*N
@@ -62,36 +70,52 @@ Fu1 = 2*(Rbar*L)';  %Should be nu*N x nu*N. Multiply later by entire sequence of
 Fu2 = 2*(Su1'*Qbar*Su)';% Should be nu x nu*N. Multiply later by just last control usage
 Fr = -2*(Qbar*Su)';
 Fx = 2*(Sx'*Qbar*Su)';
+H = (H+H')/2;
 
-%% Need to modify this for MIMO
-% Need to check dimensions of constraints
-% input constraint of -10 to 10 for rpy, input constraint of 0 to 1 for yaw
-%  [-10;-10;-10;0]   < u(-1) + du < [ 10,10,10,1]
-% rate
-control_upper = [10;10;10;1];
-control_lower = -1*[-10;-10;-10;0];  % -uk < -umin 
-W0 = [];    % constraint on control
-for i = 1:N
-    W0 = cat(1,W0,control_upper);
-end
-for j = 1:N
-    W0 = cat(1,W0,control_lower);  % final size (2*N*nu,1)
-end
+%% Constraints
 
-G = [tril(ones(N*nu));-tril(ones(N*nu))];
-S = zeros(2*N*nu,nx);  % constraint states
+% This is for just max and min input constraints
+G = [L;-L]; % Should be (2*nu*N) x (nu*N)
+
+% Thrust constraints take into account feedforward thrust
+maxT = 18000;
+minT = -47000;
+
+%Fix this later if drone behaving weird. Are these angles in radians or
+%degrees?
+maxYPR = 20%/180*pi;
+minYPR = -20%/180*pi;
+
+% Make W0
+uMax_constraint = [maxYPR; maxYPR; maxYPR; maxT]; %Assume control inputs stacked YPRT
+uMin_constraint = -1 * [minYPR; minYPR; minYPR; minT];
+
+uMax = repmat(uMax_constraint, N, 1);
+uMin = repmat(uMin_constraint, N, 1);
+
+W0 = [uMax; uMin]; % Should be (2*nu*N) x 1
+S = zeros(2*nu*N, nx); % Should be (2*nu*N) x nx. No output constraints so all 0
 
 %% Setup initial conditions for simulation
 X = zeros(nx,1); % Initial states. Should be nx x 1
+T = 100; % Number of time steps to simulate
 
-T = 40; % Number of time steps to simulate
-r = square([1:T+N+1]/6); % Step reference
-r2 = zeros(size(r)); % Pad zeros for extending step reference to nob states
-for i = 1:nob-1
-    r = [r;r2];
-end
+%Create references to follow
+ref = square([1:T+N+1]/6);
+rx = 3*ones(size(ref)); % Step reference
+% rx = zeros(size(rx));
 
-r = reshape(r, [], 1);                                            
+ry = ones(size(ref)); % Step reference
+% ry = zeros(size(rx));
+
+rz = square([1:T+N+1]/6); % Step reference
+% rz = zeros(size(rx));
+
+ryaw = 2 * square([1:T+N+1]/6); % Step reference
+% ryaw = zeros(size(rx));
+
+r = [rx;ry;rz;ryaw];
+r = reshape(r, [], 1); %Should be N*nob x 1
 
 Z = zeros(N*nu, 1); %Predicted delta U. Should be nu*N x 1
 U = zeros(nu,1); % Initial control usage. Should be nu x 1
@@ -101,21 +125,62 @@ options = optimoptions('quadprog');
 options.Display = 'none';
 Uopt = zeros(nu, T);
 Xact = zeros(nx, T);
+Ract = zeros(nob, T);
 %% Need to modify this for MIMO
 for ii = 1:T-1
     Xact(:,ii) = X; %For graphing
-    f = Fx*X + Fu2*U + Fu1*U_all + Fr*r(nob*ii:nob*(ii+N)-1);   % linear term in QP 
-    U_init = [];
-    for iter = 1:N
-        U_init = cat(1,U_init,U);
-    end
-    W = W0 - [U_init;U_init]; % du matrix for W
+    new_r = r(nob*(ii-1)+1:nob*(ii+N-1)); % Get new reference vector to follow
+    Ract(:,ii) = new_r(1:nob, 1); %For debugging reference
+    f = Fx*X + Fu2*U + Fu1*U_all + Fr*new_r;
+    W = W0 + [-1 * U_all; U_all]; %Should be (2*nu*N) x 1
     Z = quadprog(H,f,G,W+S*X,[],[],[],[],[],options);  %Here is the magic!
-    Uopt(:, ii) = U + Z(1);  %Modify this for MIMO after getting Z matrix. Just use the first item   
+    Uopt(:, ii) = U + Z(1:nu, 1);  %Just use the first item   
     U = Uopt(:, ii);
     U_all = repmat(U, N, 1);
     X = A*X+B*U;
 end
-Xact(:,ii+1) = X;
-plot([1:T],Xact(1,:),[1:T],r(nob*[1:T]))
-plot(Uopt)
+Xact(:, ii+1) = X;
+y = C*Xact; % Get actual drone outputs
+
+time = [1:T]*0.04;
+
+%Plot performance and control usage
+figure('Position', [10 700 900 650])
+subplot(4,1,1)
+plot(time,y(1,:), time,rx(1:T), '-')%, time,Ract(1,:), 'r*')
+title('X position')
+
+subplot(4,1,2)
+plot(time,y(2,:) ,time,ry(1:T), '-')%, time,Ract(2,:), 'r*')
+title('Y position')
+
+subplot(4,1,3)
+plot(time,y(3,:), time,rz(1:T), '-')%, time,Ract(3,:), 'r*')
+title('Z position')
+
+subplot(4,1,4)
+plot(time,y(4,:), time, ryaw(1:T), '-')%, time,Ract(4,:), 'r*')
+title('Yaw position')
+suptitle('Reference tracking')
+xlabel('Time (sec)')
+legend('System response', 'Reference')%, 'Reference verified')
+
+
+figure('Position', [10 20 900 650])
+subplot(4,1,1)
+plot(time, Uopt(1,:))
+title('Roll control')
+
+subplot(4,1,2)
+plot(time, Uopt(2,:))
+title('Pitch control')
+
+subplot(4,1,3)
+plot(time, Uopt(3,:))
+title('Yaw rate control')
+
+subplot(4,1,4)
+plot(time, Uopt(4,:))
+title('Thrust control')
+xlabel('Time (sec)')
+suptitle('Control usage')

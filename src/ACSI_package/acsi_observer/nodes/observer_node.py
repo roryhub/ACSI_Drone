@@ -29,9 +29,11 @@ if __name__ == '__main__':
     rospy.Subscriber('/vrpn_client_node/Crazyflie/pose',PoseStamped,optitrack_callback,callback_args=observer) #May need to rename for generality
 
     r = rospy.Rate(100)
-    start_time = rospy.Time.now()
+    start_time = rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9
 
     while not rospy.is_shutdown():
+        observer.current_states.time = rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9 - start_time
+        print(observer.current_states.time)
         states_pub.publish(observer.current_states)
         r.sleep()
 

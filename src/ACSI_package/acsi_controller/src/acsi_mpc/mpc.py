@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
@@ -224,7 +226,7 @@ class MPC:
         future_control = np.array(sol['x'])
 
         U += future_control[:self.num_outputs]
-
+        #print(U.shape)
         return U
 
     
@@ -246,10 +248,9 @@ class MPC:
 
     def get_trajectory_horizon(self, traj):
         # if horizon is greater than trajectory length, increase trajectory by stacking the last position
-        delta = self.N - traj.shape[1]
-        if delta > 0:
-            end_position = traj[:, -1][:, np.newaxis]
-            traj = np.column_stack((traj, np.tile(end_position, (1, delta))))
+
+        while self.N > traj.shape[1]:
+            traj = np.column_stack((traj,traj[:,-1]))
 
         traj_horizon = traj[:, :self.N]
         traj_horizon = self.stack_trajectories(traj_horizon)
