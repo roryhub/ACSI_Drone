@@ -68,7 +68,7 @@ def target_callback(optitrak_location,monitor):
 
     monitor.target_location.time = rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9
     monitor.target_location.x = optitrak_location.pose.position.x
-    monitor.target_location.y = optitrak_location.pose.position.y + .5
+    monitor.target_location.y = optitrak_location.pose.position.y + .2
     monitor.target_location.z = optitrak_location.pose.position.z
     monitor.target_location.dx = 0
     monitor.target_location.dy = 0

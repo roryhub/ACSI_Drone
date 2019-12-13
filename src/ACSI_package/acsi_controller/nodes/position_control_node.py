@@ -38,7 +38,7 @@ class Manager:
         self.observer_states = Drone_States()
         self.take_off_goal = Drone_States()
         self.hover_height = 1.5
-        self.drone_speed = .2
+        self.drone_speed = .5
         self.control_type = 'mpc'
 
     def observer_handle(self,states_message):
@@ -79,6 +79,17 @@ class Manager:
         self.status = 'locked and loaded'
         self.spin_pid()
 
+
+    def return_home(self):
+        self.status = 'returning home'
+        self.current_setpoint = self.take_off_goal
+        self.current_trajectory.state_array = [self.take_off_goal]
+        self.spin_pid()
+        if self.error_distance() < .2:
+            self.run_state = self.command_mode
+        else:
+            print(self.error_distance())
+
     def error_distance(self):
         
         return sqrt((self.observer_states.x-self.current_setpoint.x)**2 + (self.observer_states.y-self.current_setpoint.y)**2 + (self.observer_states.z-self.current_setpoint.z)**2)
@@ -100,8 +111,8 @@ class Manager:
         self.U = np.zeros((self.B.shape[1], 1))
         self.X = np.zeros((self.A.shape[1], 1))
 
-        self.umin = np.array([-.2, -.2, -.2, -18000.])[:, np.newaxis]
-        self.umax = np.array([.2, .2, .2, 18000.])[:, np.newaxis]
+        self.umin = np.array([-.4, -.4, -.4, -18000.])[:, np.newaxis]
+        self.umax = np.array([.4, .4, .4, 18000.])[:, np.newaxis]
 
         self.N = 30
         self.mpc = MPC(self.A, self.B, self.C, self.Q, self.R, self.RD, self.umin, self.umax, self.N)
@@ -211,6 +222,8 @@ if __name__ == '__main__':
                 manager.control_type = 'mpc'
                 manager.run_state = manager.run_trajectory
                 stage = 4
+
+
         print(manager.status)
         goal_pub.publish(manager.current_setpoint)
         status_pub.publish(manager.status)
