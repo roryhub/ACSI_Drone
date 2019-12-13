@@ -13,4 +13,7 @@
 
 	<include file="$(find acsi_vrpn_client)/launch/Wean_Motive.launch" />
 
+ 	<node pkg="rosbag" type="record" name="flight_record" args="-a -o /home/cerlabcontrol/Desktop/ACSI_Drone/Flight_Records/flight_log"/> 
+
+
 </launch>

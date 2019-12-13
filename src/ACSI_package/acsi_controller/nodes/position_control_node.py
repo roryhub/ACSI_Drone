@@ -54,7 +54,6 @@ class Manager:
             self.take_off_goal.y = self.hover_height
 
     def run_trajectory(self):
-        self.status = 'executing trajectory'
         if self.control_type == 'mpc':
             self.current_setpoint = self.current_trajectory.state_array[0]
             self.spin_mpc()
@@ -63,7 +62,21 @@ class Manager:
             self.spin_pid()
             if(len(self.current_trajectory.state_array)>1):
                 self.current_trajectory.state_array.pop(0)
+        
+        if len(self.current_trajectory.state_array) == 1:
+            self.status = 'trajectory finished'
+        else:
+            self.status = 'executing trajectory'
 
+    def rise(self):
+        self.status = 'rising'
+        self.current_setpoint.y = 1.5
+        self.spin_pid()
+        if self.error_distance() < .3:
+            self.status = 'stabalizing'
+        else:
+            print(self.error_distance())
+            
 
     def take_off_protocol(self):
         self.status = 'in take off protocol'
@@ -79,16 +92,30 @@ class Manager:
         self.status = 'locked and loaded'
         self.spin_pid()
 
-
     def return_home(self):
         self.status = 'returning home'
         self.current_setpoint = self.take_off_goal
-        self.current_trajectory.state_array = [self.take_off_goal]
         self.spin_pid()
-        if self.error_distance() < .2:
-            self.run_state = self.command_mode
+        if self.error_distance() < .3:
+            self.run_state = self.landing_protocol
         else:
             print(self.error_distance())
+    
+    def landing_protocol(self):
+        self.status = 'landing'
+        self.current_setpoint = self.take_off_goal
+        self.current_setpoint.y = .5
+        if self.error_distance() < .3:
+            self.run_state = self.kill_motors
+        else:
+            print(self.error_distance())
+
+    def kill_motors(self):
+        self.status = 'killing motors'
+        self.command.roll     = 0
+        self.command.pitch    = 0
+        self.command.yaw_rate = 0
+        self.command.thrust   = 0
 
     def error_distance(self):
         
@@ -183,6 +210,7 @@ if __name__ == '__main__':
     goal_pub = rospy.Publisher('controller/goal',Drone_States,queue_size=2)
     setpoint_pub = rospy.Publisher('controller/ypr',Attitude_Setpoint,queue_size=2)
     rospy.Subscriber('/observer/states',Drone_States,observer_callback,callback_args=manager)
+    state_pub = rospy.Publisher('controller/state',Drone_States,queue_size=2)
 
     get_trajectory = rospy.ServiceProxy('generate_trajectory',Trajectory_Service)
 
@@ -206,6 +234,7 @@ if __name__ == '__main__':
     current_goal = Drone_States()
     current_goal = hover_state
 
+    start_time = rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9
     timer = 0
     stage = 1
     while not rospy.is_shutdown():
@@ -219,14 +248,19 @@ if __name__ == '__main__':
                 manager.current_trajectory = traj.trajectory_states
                 stage = 3
             elif stage == 3:
-                manager.control_type = 'mpc'
+                manager.control_type = 'pid'
                 manager.run_state = manager.run_trajectory
-                stage = 4
-
-
+        if manager.status == 'trajectory finished':
+            manager.run_state = manager.rise
+        
         print(manager.status)
+
+        manager.current_setpoint.time = rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9 - start_time
+        manager.observer_states.time = rospy.Time.now().secs + rospy.Time.now().nsecs*1e-9 - start_time
+
         goal_pub.publish(manager.current_setpoint)
         status_pub.publish(manager.status)
+        state_pub.publish(manager.observer_states)
         setpoint_pub.publish(manager.command)
             
         r.sleep()
